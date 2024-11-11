@@ -1,3 +1,11 @@
+"""
+Author       : zzp@buaa.edu.cn
+Date         : 2024-11-11 16:07:45
+LastEditTime : 2024-11-11 18:10:08
+FilePath     : /LAG/envs/JSBSim/utils/utils.py
+Description  : 
+"""
+
 import os
 import yaml
 import pymap3d
@@ -13,25 +21,26 @@ def parse_config(filename):
     Returns:
         (EnvConfig): a custom class which parsing dict into object.
     """
-    filepath = os.path.join(get_root_dir(), 'configs', f'{filename}.yaml')
-    assert os.path.exists(filepath), \
-        f'config path {filepath} does not exist. Please pass in a string that represents the file path to the config yaml.'
-    with open(filepath, 'r', encoding='utf-8') as f:
+    filepath = os.path.join(get_root_dir(), "configs", f"{filename}.yaml")
+    assert os.path.exists(
+        filepath
+    ), f"config path {filepath} does not exist. Please pass in a string that represents the file path to the config yaml."
+    with open(filepath, "r", encoding="utf-8") as f:
         config_data = yaml.load(f, Loader=yaml.FullLoader)
 
-    return type('EnvConfig', (object,), config_data)
+    return type("EnvConfig", (object,), config_data)
 
 
 def get_root_dir():
-    return os.path.join(os.path.split(os.path.realpath(__file__))[0], '..')
+    return os.path.join(os.path.split(os.path.realpath(__file__))[0], "..")
 
 
 def LLA2NEU(lon, lat, alt, lon0=120.0, lat0=60.0, alt0=0):
     """Convert from Geodetic Coordinate System to NEU Coordinate System.
 
     Args:
-        lon, lat, alt (float): target geodetic lontitude(°), latitude(°), altitude(m)
-        lon, lat, alt (float): observer geodetic lontitude(°), latitude(°), altitude(m); Default=`(120°E, 60°N, 0m)`
+        lon, lat, alt (float): target geodetic longitude(°), latitude(°), altitude(m)
+        lon, lat, alt (float): observer geodetic longitude(°), latitude(°), altitude(m); Default=`(120°E, 60°N, 0m)`
 
     Returns:
         (np.array): (North, East, Up), unit: m
@@ -45,7 +54,7 @@ def NEU2LLA(n, e, u, lon0=120.0, lat0=60.0, alt0=0):
 
     Args:
         n, e, u (float): target relative position w.r.t. North, East, Down
-        lon, lat, alt (float): observer geodetic lontitude(°), latitude(°), altitude(m); Default=`(120°E, 60°N, 0m)`
+        lon, lat, alt (float): observer geodetic longitude(°), latitude(°), altitude(m); Default=`(120°E, 60°N, 0m)`
 
     Returns:
         (np.array): (lon, lat, alt), unit: °, °, m
@@ -103,7 +112,7 @@ def get2d_AO_TA_R(ego_feature, enm_feature, return_side=False):
 
 
 def in_range_deg(angle):
-    """ Given an angle in degrees, normalises in (-180, 180] """
+    """Given an angle in degrees, normalizes in (-180, 180]"""
     angle = angle % 360
     if angle > 180:
         angle -= 360
@@ -111,7 +120,7 @@ def in_range_deg(angle):
 
 
 def in_range_rad(angle):
-    """ Given an angle in rads, normalises in (-pi, pi] """
+    """Given an angle in rads, normalizes in (-pi, pi]"""
     angle = angle % (2 * np.pi)
     if angle > np.pi:
         angle -= 2 * np.pi

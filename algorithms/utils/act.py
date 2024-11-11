@@ -1,3 +1,11 @@
+"""
+Author       : zzp@buaa.edu.cn
+Date         : 2024-11-11 16:07:45
+LastEditTime : 2024-11-11 18:17:54
+FilePath     : /LAG/algorithms/utils/act.py
+Description  : 
+"""
+
 import gymnasium as gym
 import torch
 import torch.nn as nn
@@ -9,14 +17,14 @@ from .mlp import MLPLayer
 class ACTLayer(nn.Module):
     def __init__(self, act_space, input_dim, hidden_size, activation_id, gain):
         super(ACTLayer, self).__init__()
-        self._mlp_actlayer = False
+        self._mlp_act_layer = False
         self._continuous_action = False
-        self._multidiscrete_action = False
+        self._multi_discrete_action = False
         self._mixed_action = False
         self._shoot_action = False
 
         if len(hidden_size) > 0:
-            self._mlp_actlayer = True
+            self._mlp_act_layer = True
             self.mlp = MLPLayer(input_dim, hidden_size, activation_id)
             input_dim = self.mlp.output_size
 
@@ -31,15 +39,17 @@ class ACTLayer(nn.Module):
             action_dim = act_space.shape[0]
             self.action_out = Bernoulli(input_dim, action_dim, gain)
         elif isinstance(act_space, gym.spaces.MultiDiscrete):
-            self._multidiscrete_action = True
+            self._multi_discrete_action = True
             action_dims = act_space.nvec
             action_outs = []
             for action_dim in action_dims:
                 action_outs.append(Categorical(input_dim, action_dim, gain))
             self.action_outs = nn.ModuleList(action_outs)
-        elif isinstance(act_space, gym.spaces.Tuple) and  \
-              isinstance(act_space[0], gym.spaces.MultiDiscrete) and \
-                  isinstance(act_space[1], gym.spaces.Discrete):
+        elif (
+            isinstance(act_space, gym.spaces.Tuple)
+            and isinstance(act_space[0], gym.spaces.MultiDiscrete)
+            and isinstance(act_space[1], gym.spaces.Discrete)
+        ):
             # NOTE: only for shoot missile
             self._shoot_action = True
             discrete_dims = act_space[0].nvec
@@ -49,14 +59,18 @@ class ACTLayer(nn.Module):
             action_outs = []
             for discrete_dim in discrete_dims:
                 action_outs.append(Categorical(input_dim, discrete_dim, gain))
-            action_outs.append(BetaShootBernoulli(input_dim, self._control_shoot_dim, gain))
+            action_outs.append(
+                BetaShootBernoulli(input_dim, self._control_shoot_dim, gain)
+            )
             self.action_outs = nn.ModuleList(action_outs)
-        else: 
-            raise NotImplementedError(f"Unsupported action space type: {type(act_space)}!")
+        else:
+            raise NotImplementedError(
+                f"Unsupported action space type: {type(act_space)}!"
+            )
 
     def forward(self, x, deterministic=False, **kwargs):
         """
-        Compute actions and action logprobs from given input.
+        Compute actions and action log probs from given input.
 
         Args:
             x (torch.Tensor): input to network.
@@ -66,10 +80,10 @@ class ACTLayer(nn.Module):
             actions (torch.Tensor): actions to take.
             action_log_probs (torch.Tensor): log probabilities of taken actions.
         """
-        if self._mlp_actlayer:
+        if self._mlp_act_layer:
             x = self.mlp(x)
 
-        if self._multidiscrete_action:
+        if self._multi_discrete_action:
             actions = []
             action_log_probs = []
             for action_out in self.action_outs:
@@ -79,8 +93,10 @@ class ACTLayer(nn.Module):
                 actions.append(action)
                 action_log_probs.append(action_log_prob)
             actions = torch.cat(actions, dim=-1)
-            action_log_probs = torch.cat(action_log_probs, dim=-1).sum(dim=-1, keepdim=True)
-        
+            action_log_probs = torch.cat(action_log_probs, dim=-1).sum(
+                dim=-1, keepdim=True
+            )
+
         elif self._shoot_action:
             actions = []
             action_log_probs = []
@@ -91,10 +107,16 @@ class ACTLayer(nn.Module):
                 actions.append(action)
                 action_log_probs.append(action_log_prob)
             shoot_action_dist = self.action_outs[-1](x, **kwargs)
-            shoot_action = shoot_action_dist.mode() if deterministic else shoot_action_dist.sample()
+            shoot_action = (
+                shoot_action_dist.mode()
+                if deterministic
+                else shoot_action_dist.sample()
+            )
             actions.append(shoot_action)
             actions = torch.cat(actions, dim=-1)
-            action_log_probs = torch.cat(action_log_probs, dim=-1).sum(dim=-1, keepdim=True)
+            action_log_probs = torch.cat(action_log_probs, dim=-1).sum(
+                dim=-1, keepdim=True
+            )
 
         else:
             action_dists = self.action_out(x)
@@ -115,10 +137,10 @@ class ACTLayer(nn.Module):
             action_log_probs (torch.Tensor): log probabilities of the input actions.
             dist_entropy (torch.Tensor): action distribution entropy for the given inputs.
         """
-        if self._mlp_actlayer:
+        if self._mlp_act_layer:
             x = self.mlp(x)
 
-        if self._multidiscrete_action:
+        if self._multi_discrete_action:
             action = torch.transpose(action, 0, 1)
             action_log_probs = []
             dist_entropy = []
@@ -126,14 +148,22 @@ class ACTLayer(nn.Module):
                 action_dist = action_out(x)
                 action_log_probs.append(action_dist.log_probs(act.unsqueeze(-1)))
                 if active_masks is not None:
-                    dist_entropy.append((action_dist.entropy() * active_masks) / active_masks.sum())
+                    dist_entropy.append(
+                        (action_dist.entropy() * active_masks) / active_masks.sum()
+                    )
                 else:
-                    dist_entropy.append(action_dist.entropy() / action_log_probs[-1].size(0))
-            action_log_probs = torch.cat(action_log_probs, dim=-1).sum(dim=-1, keepdim=True)
+                    dist_entropy.append(
+                        action_dist.entropy() / action_log_probs[-1].size(0)
+                    )
+            action_log_probs = torch.cat(action_log_probs, dim=-1).sum(
+                dim=-1, keepdim=True
+            )
             dist_entropy = torch.cat(dist_entropy, dim=-1).sum(dim=-1, keepdim=True)
 
         elif self._shoot_action:
-            dis_action, shoot_action = action.split((self._discrete_dim, self._shoot_dim), dim=-1)
+            dis_action, shoot_action = action.split(
+                (self._discrete_dim, self._shoot_dim), dim=-1
+            )
             action_log_probs = []
             dist_entropy = []
             # multi-discrete action
@@ -142,26 +172,38 @@ class ACTLayer(nn.Module):
                 action_dist = action_out(x)
                 action_log_probs.append(action_dist.log_probs(act.unsqueeze(-1)))
                 if active_masks is not None:
-                    dist_entropy.append((action_dist.entropy() * active_masks) / active_masks.sum())
+                    dist_entropy.append(
+                        (action_dist.entropy() * active_masks) / active_masks.sum()
+                    )
                 else:
-                    dist_entropy.append(action_dist.entropy() / action_log_probs[-1].size(0))
+                    dist_entropy.append(
+                        action_dist.entropy() / action_log_probs[-1].size(0)
+                    )
 
             # shoot action
             shoot_action_dist = self.action_outs[-1](x, **kwargs)
             action_log_probs.append(shoot_action_dist.log_probs(shoot_action))
             if active_masks is not None:
-                dist_entropy.append((shoot_action_dist.entropy() * active_masks) / active_masks.sum())
+                dist_entropy.append(
+                    (shoot_action_dist.entropy() * active_masks) / active_masks.sum()
+                )
             else:
-                dist_entropy.append(shoot_action_dist.entropy() / action_log_probs[-1].size(0))
+                dist_entropy.append(
+                    shoot_action_dist.entropy() / action_log_probs[-1].size(0)
+                )
 
-            action_log_probs = torch.cat(action_log_probs, dim=-1).sum(dim=-1, keepdim=True)
+            action_log_probs = torch.cat(action_log_probs, dim=-1).sum(
+                dim=-1, keepdim=True
+            )
             dist_entropy = torch.cat(dist_entropy, dim=-1).sum(dim=-1, keepdim=True)
 
         else:
             action_dist = self.action_out(x)
             action_log_probs = action_dist.log_probs(action)
             if active_masks is not None:
-                dist_entropy = (action_dist.entropy() * active_masks) / active_masks.sum()
+                dist_entropy = (
+                    action_dist.entropy() * active_masks
+                ) / active_masks.sum()
             else:
                 dist_entropy = action_dist.entropy() / action_log_probs.size(0)
         return action_log_probs, dist_entropy
@@ -176,9 +218,9 @@ class ACTLayer(nn.Module):
         Return:
             action_probs (torch.Tensor):
         """
-        if self._mlp_actlayer:
+        if self._mlp_act_layer:
             x = self.mlp(x)
-        if self._multidiscrete_action:
+        if self._multi_discrete_action:
             action_probs = []
             for action_out in self.action_outs:
                 action_dist = action_out(x)
@@ -194,7 +236,7 @@ class ACTLayer(nn.Module):
 
     @property
     def output_size(self) -> int:
-        if self._multidiscrete_action or self._shoot_action:
+        if self._multi_discrete_action or self._shoot_action:
             return len(self.action_outs)
         else:
             return self.action_out.output_size

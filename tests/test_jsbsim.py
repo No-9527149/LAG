@@ -1,3 +1,11 @@
+"""
+Author       : zzp@buaa.edu.cn
+Date         : 2024-11-11 16:07:45
+LastEditTime : 2024-11-11 18:13:43
+FilePath     : /LAG/tests/test_jsbsim.py
+Description  : 
+"""
+
 import sys
 import os
 import pytest

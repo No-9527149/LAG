@@ -1,3 +1,11 @@
+"""
+Author       : zzp@buaa.edu.cn
+Date         : 2024-11-11 16:07:45
+LastEditTime : 2024-11-11 18:05:18
+FilePath     : /LAG/envs/JSBSim/core/simulator.py
+Description  : 
+"""
+
 import os
 import logging
 import numpy as np

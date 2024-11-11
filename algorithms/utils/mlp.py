@@ -1,3 +1,11 @@
+"""
+Author       : zzp@buaa.edu.cn
+Date         : 2024-11-11 16:07:45
+LastEditTime : 2024-11-11 18:22:41
+FilePath     : /LAG/algorithms/utils/mlp.py
+Description  : 
+"""
+
 import torch
 import torch.nn as nn
 from .flatten import build_flattener
@@ -6,14 +14,16 @@ from .flatten import build_flattener
 class MLPLayer(nn.Module):
     def __init__(self, input_dim, hidden_size, activation_id):
         super(MLPLayer, self).__init__()
-        self._size = [input_dim] + list(map(int, hidden_size.split(' ')))
+        self._size = [input_dim] + list(map(int, hidden_size.split(" ")))
         self._hidden_layers = len(self._size) - 1
         active_func = [nn.Tanh(), nn.ReLU(), nn.LeakyReLU(), nn.ELU()][activation_id]
 
         fc_h = []
         for j in range(len(self._size) - 1):
             fc_h += [
-                nn.Linear(self._size[j], self._size[j + 1]), active_func, nn.LayerNorm(self._size[j + 1])
+                nn.Linear(self._size[j], self._size[j + 1]),
+                active_func,
+                nn.LayerNorm(self._size[j + 1]),
             ]
         self.fc = nn.Sequential(*fc_h)
 
@@ -28,7 +38,9 @@ class MLPLayer(nn.Module):
 
 # Feature extraction module
 class MLPBase(nn.Module):
-    def __init__(self, obs_space, hidden_size, activation_id, use_feature_normalization):
+    def __init__(
+        self, obs_space, hidden_size, activation_id, use_feature_normalization
+    ):
         super(MLPBase, self).__init__()
         self._hidden_size = hidden_size
         self._activation_id = activation_id

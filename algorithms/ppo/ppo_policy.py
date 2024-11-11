@@ -1,3 +1,11 @@
+"""
+Author       : zzp@buaa.edu.cn
+Date         : 2024-11-11 16:07:45
+LastEditTime : 2024-11-11 18:17:20
+FilePath     : /LAG/algorithms/ppo/ppo_policy.py
+Description  : 
+"""
+
 import torch
 from .ppo_actor import PPOActor
 from .ppo_critic import PPOCritic
@@ -17,17 +25,19 @@ class PPOPolicy:
         self.actor = PPOActor(args, self.obs_space, self.act_space, self.device)
         self.critic = PPOCritic(args, self.obs_space, self.device)
 
-        self.optimizer = torch.optim.Adam([
-            {'params': self.actor.parameters()},
-            {'params': self.critic.parameters()}
-        ], lr=self.lr)
+        self.optimizer = torch.optim.Adam(
+            [{"params": self.actor.parameters()}, {"params": self.critic.parameters()}],
+            lr=self.lr,
+        )
 
     def get_actions(self, obs, rnn_states_actor, rnn_states_critic, masks):
         """
         Returns:
             values, actions, action_log_probs, rnn_states_actor, rnn_states_critic
         """
-        actions, action_log_probs, rnn_states_actor = self.actor(obs, rnn_states_actor, masks)
+        actions, action_log_probs, rnn_states_actor = self.actor(
+            obs, rnn_states_actor, masks
+        )
         values, rnn_states_critic = self.critic(obs, rnn_states_critic, masks)
         return values, actions, action_log_probs, rnn_states_actor, rnn_states_critic
 
@@ -39,12 +49,16 @@ class PPOPolicy:
         values, _ = self.critic(obs, rnn_states_critic, masks)
         return values
 
-    def evaluate_actions(self, obs, rnn_states_actor, rnn_states_critic, action, masks, active_masks=None):
+    def evaluate_actions(
+        self, obs, rnn_states_actor, rnn_states_critic, action, masks, active_masks=None
+    ):
         """
         Returns:
             values, action_log_probs, dist_entropy
         """
-        action_log_probs, dist_entropy = self.actor.evaluate_actions(obs, rnn_states_actor, action, masks, active_masks)
+        action_log_probs, dist_entropy = self.actor.evaluate_actions(
+            obs, rnn_states_actor, action, masks, active_masks
+        )
         values, _ = self.critic(obs, rnn_states_critic, masks)
         return values, action_log_probs, dist_entropy
 
@@ -53,7 +67,9 @@ class PPOPolicy:
         Returns:
             actions, rnn_states_actor
         """
-        actions, _, rnn_states_actor = self.actor(obs, rnn_states_actor, masks, deterministic)
+        actions, _, rnn_states_actor = self.actor(
+            obs, rnn_states_actor, masks, deterministic
+        )
         return actions, rnn_states_actor
 
     def prep_training(self):

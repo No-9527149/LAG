@@ -1,3 +1,11 @@
+"""
+Author       : zzp@buaa.edu.cn
+Date         : 2024-11-11 16:07:45
+LastEditTime : 2024-11-11 17:57:39
+FilePath     : /LAG/envs/JSBSim/model/baseline_actor.py
+Description  : 
+"""
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -12,14 +20,17 @@ def check(input):
 class MLPLayer(nn.Module):
     def __init__(self, input_dim, hidden_size) -> None:
         super().__init__()
-        self._size = [input_dim] + list(map(int, hidden_size.split(' ')))
+        self._size = [input_dim] + list(map(int, hidden_size.split(" ")))
         self._hidden_layers = len(self._size) - 1
+        # TODO(zzp): another active_func
         active_func = nn.ReLU()
 
         fc_h = []
         for j in range(len(self._size) - 1):
             fc_h += [
-                nn.Linear(self._size[j], self._size[j + 1]), active_func, nn.LayerNorm(self._size[j + 1])
+                nn.Linear(self._size[j], self._size[j + 1]),
+                active_func,
+                nn.LayerNorm(self._size[j + 1]),
             ]
         self.fc = nn.Sequential(*fc_h)
 
@@ -41,17 +52,17 @@ class MLPBase(nn.Module):
 class GRULayer(nn.Module):
     def __init__(self, input_size, hidden_size, num_layers):
         super().__init__()
-        self.gru = nn.GRU(input_size=input_size,
-                          hidden_size=hidden_size,
-                          num_layers=num_layers)
+        self.gru = nn.GRU(
+            input_size=input_size, hidden_size=hidden_size, num_layers=num_layers
+        )
         # NOTE: self.gru(x, hxs) needs x=[T, N, input_size] and hxs=[L, N, hidden_size]
         self.norm = nn.LayerNorm(hidden_size)
 
     def forward(self, x: F.Tensor, hxs: F.Tensor):
         # x=[N, input_size], hxs=[N, L, hidden_size]
         x, hxs = self.gru(x.unsqueeze(0), hxs.transpose(0, 1).contiguous())
-        x = x.squeeze(0)            # [1, N, input_size] => [N, input_size]
-        hxs = hxs.transpose(0, 1)   # [L, N, hidden_size] => [N, L, hidden_size]
+        x = x.squeeze(0)  # [1, N, input_size] => [N, input_size]
+        hxs = hxs.transpose(0, 1)  # [L, N, hidden_size] => [N, L, hidden_size]
         x = self.norm(x)
         return x, hxs
 
@@ -63,22 +74,24 @@ class Categorical(nn.Module):
 
     def forward(self, x):
         logits = self.logits_net(x)
-        return torch.distributions.Categorical(logits=logits).probs.argmax(dim=-1, keepdim=True)
+        return torch.distributions.Categorical(logits=logits).probs.argmax(
+            dim=-1, keepdim=True
+        )
 
 
 class ACTLayer(nn.Module):
-    def __init__(self, input_dim, action_dims, use_mlp_actlayer=False):
+    def __init__(self, input_dim, action_dims, use_mlp_act_layer=False):
         super(ACTLayer, self).__init__()
-        self._mlp_actlayer = use_mlp_actlayer
-        if self._mlp_actlayer:
-            self.mlp = MLPLayer(128, '128 128')
+        self._mlp_act_layer = use_mlp_act_layer
+        if self._mlp_act_layer:
+            self.mlp = MLPLayer(128, "128 128")
         action_outs = []
         for action_dim in action_dims:
             action_outs.append(Categorical(input_dim, action_dim))
         self.action_outs = nn.ModuleList(action_outs)
 
     def forward(self, x):
-        if self._mlp_actlayer:
+        if self._mlp_act_layer:
             x = self.mlp(x)
         actions = []
         for action_out in self.action_outs:
@@ -91,13 +104,16 @@ class ACTLayer(nn.Module):
 class BaselineActor(nn.Module):
     def __init__(self, input_dim=12, use_mlp_act_layer=False) -> None:
         super().__init__()
-        self.tpdv = dict(dtype=torch.float32, device=torch.device('cpu'))
-        self.base = MLPBase(input_dim, '128 128')
+        # TODO(zzp): gpu
+        self.tpdv = dict(dtype=torch.float32, device=torch.device("cpu"))
+        self.base = MLPBase(input_dim, "128 128")
         self.rnn = GRULayer(128, 128, 1)
         self.act = ACTLayer(128, [41, 41, 41, 30], use_mlp_act_layer)
-        self.to(torch.device('cpu'))
+        # TODO(zzp): gpu
+        self.to(torch.device("cpu"))
 
     def check(self, input):
+        # TODO(zzp): in / out ?
         output = torch.from_numpy(input) if type(input) == np.ndarray else input
         return output
 

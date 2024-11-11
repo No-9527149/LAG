@@ -1,13 +1,18 @@
 import numpy as np
 from typing import Tuple, Dict, Any
 from .env_base import BaseEnv
-from ..tasks.multiple_combat_task import HierarchicalMultipleCombatShootTask, HierarchicalMultipleCombatTask, MultipleCombatTask
+from ..tasks.multiple_combat_task import (
+    HierarchicalMultipleCombatShootTask,
+    HierarchicalMultipleCombatTask,
+    MultipleCombatTask,
+)
 
 
 class MultipleCombatEnv(BaseEnv):
     """
     MultipleCombatEnv is an multi-player competitive environment.
     """
+
     def __init__(self, config_name: str):
         super().__init__(config_name)
         # Env-Specific initialization here!
@@ -18,12 +23,12 @@ class MultipleCombatEnv(BaseEnv):
         return self.task.share_observation_space
 
     def load_task(self):
-        task_name = getattr(self.config, 'task', None)
-        if task_name == 'multiple_combat':
+        task_name = getattr(self.config, "task", None)
+        if task_name == "multiple_combat":
             self.task = MultipleCombatTask(self.config)
-        elif task_name == 'hierarchical_multiple_combat':
+        elif task_name == "hierarchical_multiple_combat":
             self.task = HierarchicalMultipleCombatTask(self.config)
-        elif task_name == 'hierarchical_multiple_combat_shoot':
+        elif task_name == "hierarchical_multiple_combat_shoot":
             self.task = HierarchicalMultipleCombatShootTask(self.config)
         else:
             raise NotImplementedError(f"Unknown task_name: {task_name}")
@@ -48,7 +53,9 @@ class MultipleCombatEnv(BaseEnv):
             sim.reload()
         self._tempsims.clear()
 
-    def step(self, action: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, dict]:
+    def step(
+        self, action: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, dict]:
         """Run one timestep of the environment's dynamics. When end of
         episode is reached, you are responsible for calling `reset()`
         to reset this environment's observation. Accepts an action and
@@ -99,4 +106,10 @@ class MultipleCombatEnv(BaseEnv):
             done, info = self.task.get_termination(self, agent_id, info)
             dones[agent_id] = [done]
 
-        return self._pack(obs), self._pack(share_obs), self._pack(rewards), self._pack(dones), info
+        return (
+            self._pack(obs),
+            self._pack(share_obs),
+            self._pack(rewards),
+            self._pack(dones),
+            info,
+        )

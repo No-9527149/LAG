@@ -1,14 +1,7 @@
 """
 Author       : zzp@buaa.edu.cn
 Date         : 2024-11-11 16:07:45
-LastEditTime : 2024-11-11 16:51:03
-FilePath     : /LAG/envs/JSBSim/envs/single_control_env.py
-Description  : 
-"""
-"""
-Author       : zzp@buaa.edu.cn
-Date         : 2024-11-11 16:07:45
-LastEditTime : 2024-11-11 16:47:22
+LastEditTime : 2024-11-11 18:01:40
 FilePath     : /LAG/envs/JSBSim/envs/single_control_env.py
 Description  : 
 """

@@ -1,3 +1,11 @@
+"""
+Author       : zzp@buaa.edu.cn
+Date         : 2024-11-11 16:07:45
+LastEditTime : 2024-11-11 18:21:11
+FilePath     : /LAG/algorithms/utils/flatten.py
+Description  : 
+"""
+
 import gymnasium.spaces
 import numpy as np
 import gymnasium as gym
@@ -7,8 +15,9 @@ from collections import OrderedDict
 def build_flattener(space):
     if isinstance(space, gymnasium.spaces.Dict):
         return DictFlattener(space)
-    elif isinstance(space, gymnasium.spaces.Box) \
-            or isinstance(space, gymnasium.spaces.MultiDiscrete):
+    elif isinstance(space, gymnasium.spaces.Box) or isinstance(
+        space, gymnasium.spaces.MultiDiscrete
+    ):
         return BoxFlattener(space)
     elif isinstance(space, gymnasium.spaces.Discrete):
         return DiscreteFlattener(space)
@@ -16,9 +25,8 @@ def build_flattener(space):
         raise NotImplementedError
 
 
-class DictFlattener():
-    """Dict和Vector直接的转换
-    """
+class DictFlattener:
+    """Dict -> Vector"""
 
     def __init__(self, ori_space):
         self.space = ori_space
@@ -36,12 +44,13 @@ class DictFlattener():
             self.size += flattener.size
 
     def __call__(self, observation):
-        """把Dict转换成Vector
-        """
+        """Dict -> Vector"""
         assert isinstance(observation, OrderedDict)
         batch = self.get_batch(observation, self)
         if batch == 1:
-            array = np.zeros(self.size,)
+            array = np.zeros(
+                self.size,
+            )
         else:
             array = np.zeros(self.size)
 
@@ -49,8 +58,7 @@ class DictFlattener():
         return array
 
     def inv(self, observation):
-        """把Vector解码成Dict
-        """
+        """Vector ->[decode]-> Dict"""
         offset_start, offset_end = 0, 0
         output = OrderedDict()
         for n, f in self.flatteners.items():
@@ -73,14 +81,14 @@ class DictFlattener():
             return np.asarray(observation).size // flattener.size
 
 
-class BoxFlattener():
-    """把Box/MultiDiscrete类型的空间变成一个Vector
-    """
+class BoxFlattener:
+    """Box / MultiDiscrete -> Vector"""
 
     def __init__(self, ori_space):
         self.space = ori_space
-        assert isinstance(ori_space, gym.spaces.Box) \
-            or isinstance(ori_space, gym.spaces.MultiDiscrete)
+        assert isinstance(ori_space, gym.spaces.Box) or isinstance(
+            ori_space, gym.spaces.MultiDiscrete
+        )
         self.size = np.product(ori_space.shape)
 
     def __call__(self, observation):
@@ -98,12 +106,12 @@ class BoxFlattener():
             return array.reshape((-1,) + self.space.shape)
 
     def write(self, observation, array, offset):
-        array[..., offset:offset + self.size] = self(observation)
+        # TODO(zzp): ..., self()?
+        array[..., offset : offset + self.size] = self(observation)
 
 
-class DiscreteFlattener():
-    """把Discrete类型的空间变成一个Vector
-    """
+class DiscreteFlattener:
+    """Discrete -> Vector"""
 
     def __init__(self, ori_space):
         self.space = ori_space
@@ -125,4 +133,4 @@ class DiscreteFlattener():
             return array.reshape(-1, 1)
 
     def write(self, observation, array, offset):
-        array[..., offset:offset + 1] = self(observation)
+        array[..., offset : offset + 1] = self(observation)

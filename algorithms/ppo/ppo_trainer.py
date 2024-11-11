@@ -1,3 +1,11 @@
+"""
+Author       : zzp@buaa.edu.cn
+Date         : 2024-11-11 16:07:45
+LastEditTime : 2024-11-11 18:17:27
+FilePath     : /LAG/algorithms/ppo/ppo_trainer.py
+Description  : 
+"""
+
 import torch
 import torch.nn as nn
 from typing import Union, List
@@ -6,7 +14,7 @@ from ..utils.buffer import ReplayBuffer
 from ..utils.utils import check, get_gard_norm
 
 
-class PPOTrainer():
+class PPOTrainer:
     def __init__(self, args, device=torch.device("cpu")):
 
         self.device = device
@@ -26,30 +34,46 @@ class PPOTrainer():
 
     def ppo_update(self, policy: PPOPolicy, sample):
 
-        obs_batch, actions_batch, masks_batch, old_action_log_probs_batch, advantages_batch, \
-            returns_batch, value_preds_batch, rnn_states_actor_batch, rnn_states_critic_batch = sample
+        (
+            obs_batch,
+            actions_batch,
+            masks_batch,
+            old_action_log_probs_batch,
+            advantages_batch,
+            returns_batch,
+            value_predictions_batch,
+            rnn_states_actor_batch,
+            rnn_states_critic_batch,
+        ) = sample
 
         old_action_log_probs_batch = check(old_action_log_probs_batch).to(**self.tpdv)
         advantages_batch = check(advantages_batch).to(**self.tpdv)
         returns_batch = check(returns_batch).to(**self.tpdv)
-        value_preds_batch = check(value_preds_batch).to(**self.tpdv)
+        value_predictions_batch = check(value_predictions_batch).to(**self.tpdv)
 
         # Reshape to do in a single forward pass for all steps
-        values, action_log_probs, dist_entropy = policy.evaluate_actions(obs_batch,
-                                                                         rnn_states_actor_batch,
-                                                                         rnn_states_critic_batch,
-                                                                         actions_batch,
-                                                                         masks_batch)
+        values, action_log_probs, dist_entropy = policy.evaluate_actions(
+            obs_batch,
+            rnn_states_actor_batch,
+            rnn_states_critic_batch,
+            actions_batch,
+            masks_batch,
+        )
 
         # Obtain the loss function
         ratio = torch.exp(action_log_probs - old_action_log_probs_batch)
-        surr1 = ratio * advantages_batch
-        surr2 = torch.clamp(ratio, 1.0 - self.clip_param, 1.0 + self.clip_param) * advantages_batch
-        policy_loss = torch.sum(torch.min(surr1, surr2), dim=-1, keepdim=True)
+        sur_1 = ratio * advantages_batch
+        sur_2 = (
+            torch.clamp(ratio, 1.0 - self.clip_param, 1.0 + self.clip_param)
+            * advantages_batch
+        )
+        policy_loss = torch.sum(torch.min(sur_1, sur_2), dim=-1, keepdim=True)
         policy_loss = -policy_loss.mean()
 
         if self.use_clipped_value_loss:
-            value_pred_clipped = value_preds_batch + (values - value_preds_batch).clamp(-self.clip_param, self.clip_param)
+            value_pred_clipped = value_predictions_batch + (values - value_predictions_batch).clamp(
+                -self.clip_param, self.clip_param
+            )
             value_losses = (values - returns_batch).pow(2)
             value_losses_clipped = (value_pred_clipped - returns_batch).pow(2)
             value_loss = 0.5 * torch.max(value_losses, value_losses_clipped)
@@ -59,47 +83,70 @@ class PPOTrainer():
 
         policy_entropy_loss = -dist_entropy.mean()
 
-        loss = policy_loss + value_loss * self.value_loss_coef + policy_entropy_loss * self.entropy_coef
+        loss = (
+            policy_loss
+            + value_loss * self.value_loss_coef
+            + policy_entropy_loss * self.entropy_coef
+        )
 
         # Optimize the loss function
         policy.optimizer.zero_grad()
         loss.backward()
         if self.use_max_grad_norm:
-            actor_grad_norm = nn.utils.clip_grad_norm_(policy.actor.parameters(), self.max_grad_norm).item()
-            critic_grad_norm = nn.utils.clip_grad_norm_(policy.critic.parameters(), self.max_grad_norm).item()
+            actor_grad_norm = nn.utils.clip_grad_norm_(
+                policy.actor.parameters(), self.max_grad_norm
+            ).item()
+            critic_grad_norm = nn.utils.clip_grad_norm_(
+                policy.critic.parameters(), self.max_grad_norm
+            ).item()
         else:
             actor_grad_norm = get_gard_norm(policy.actor.parameters())
             critic_grad_norm = get_gard_norm(policy.critic.parameters())
         policy.optimizer.step()
 
-        return policy_loss, value_loss, policy_entropy_loss, ratio, actor_grad_norm, critic_grad_norm
+        return (
+            policy_loss,
+            value_loss,
+            policy_entropy_loss,
+            ratio,
+            actor_grad_norm,
+            critic_grad_norm,
+        )
 
     def train(self, policy: PPOPolicy, buffer: Union[ReplayBuffer, List[ReplayBuffer]]):
         train_info = {}
-        train_info['value_loss'] = 0
-        train_info['policy_loss'] = 0
-        train_info['policy_entropy_loss'] = 0
-        train_info['actor_grad_norm'] = 0
-        train_info['critic_grad_norm'] = 0
-        train_info['ratio'] = 0
+        train_info["value_loss"] = 0
+        train_info["policy_loss"] = 0
+        train_info["policy_entropy_loss"] = 0
+        train_info["actor_grad_norm"] = 0
+        train_info["critic_grad_norm"] = 0
+        train_info["ratio"] = 0
 
         for _ in range(self.ppo_epoch):
             if self.use_recurrent_policy:
-                data_generator = ReplayBuffer.recurrent_generator(buffer, self.num_mini_batch, self.data_chunk_length)
+                data_generator = ReplayBuffer.recurrent_generator(
+                    buffer, self.num_mini_batch, self.data_chunk_length
+                )
             else:
                 raise NotImplementedError
 
             for sample in data_generator:
 
-                policy_loss, value_loss, policy_entropy_loss, ratio, \
-                    actor_grad_norm, critic_grad_norm = self.ppo_update(policy, sample)
+                (
+                    policy_loss,
+                    value_loss,
+                    policy_entropy_loss,
+                    ratio,
+                    actor_grad_norm,
+                    critic_grad_norm,
+                ) = self.ppo_update(policy, sample)
 
-                train_info['value_loss'] += value_loss.item()
-                train_info['policy_loss'] += policy_loss.item()
-                train_info['policy_entropy_loss'] += policy_entropy_loss.item()
-                train_info['actor_grad_norm'] += actor_grad_norm
-                train_info['critic_grad_norm'] += critic_grad_norm
-                train_info['ratio'] += ratio.mean().item()
+                train_info["value_loss"] += value_loss.item()
+                train_info["policy_loss"] += policy_loss.item()
+                train_info["policy_entropy_loss"] += policy_entropy_loss.item()
+                train_info["actor_grad_norm"] += actor_grad_norm
+                train_info["critic_grad_norm"] += critic_grad_norm
+                train_info["ratio"] += ratio.mean().item()
 
         num_updates = self.ppo_epoch * self.num_mini_batch
 

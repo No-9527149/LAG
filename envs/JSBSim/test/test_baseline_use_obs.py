@@ -1,8 +1,21 @@
+"""
+Author       : zzp@buaa.edu.cn
+Date         : 2024-11-11 16:07:45
+LastEditTime : 2024-11-11 18:09:54
+FilePath     : /LAG/envs/JSBSim/test/test_baseline_use_obs.py
+Description  : 
+"""
+
 from abc import ABC
 import sys
 import os
+
 # Deal with import error
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))))
+sys.path.append(
+    os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+    )
+)
 import torch
 import numpy as np
 from typing import Literal
@@ -12,9 +25,10 @@ from envs.JSBSim.envs import SingleCombatEnv
 from envs.JSBSim.utils.utils import get_root_dir
 from envs.JSBSim.model.baseline_actor import BaselineActor
 
+
 class BaselineAgent(ABC):
     def __init__(self, agent_id) -> None:
-        self.model_path = get_root_dir() + '/model/baseline_model.pt'
+        self.model_path = get_root_dir() + "/model/baseline_model.pt"
         self.actor = BaselineActor()
         self.actor.load_state_dict(torch.load(self.model_path, weights_only=True))
         self.actor.eval()
@@ -29,8 +43,8 @@ class BaselineAgent(ABC):
         raise NotImplementedError
 
     def get_observation(self, observation, delta_value):
-        '''
-        construct baseline observation from task observation 
+        """
+        construct baseline observation from task observation
 
         Baseline  observation:
         #  0. ego delta altitude      (unit: 1km)
@@ -45,7 +59,7 @@ class BaselineAgent(ABC):
         #  9. ego_body_v_y            (unit: mh)
         #  10. ego_body_v_z           (unit: mh)
         #  11. ego_vc                 (unit: mh)
-        '''
+        """
         norm_obs = np.zeros(12)
         norm_obs[:3] = delta_value
         norm_obs[3:12] = observation[:9]
@@ -66,23 +80,23 @@ class PursueAgent(BaselineAgent):
 
     def set_delta_value(self, observation):
         delta_altitude = observation[10]
-        delta_heading = observation[14]*observation[11]
+        delta_heading = observation[14] * observation[11]
         delta_velocity = observation[9]
         return np.array([delta_altitude, delta_heading, delta_velocity])
 
 
 class ManeuverAgent(BaselineAgent):
-    def __init__(self, agent_id, maneuver: Literal['l', 'r', 'n']) -> None:
+    def __init__(self, agent_id, maneuver: Literal["l", "r", "n"]) -> None:
         super().__init__(agent_id)
-        self.turn_interval = 7         # unit: s
-        self.env_time_interval = 0.2   # unit: 0.2s
-        self.dodge_missile = True      # start turn when missile is detected, if set true
-        if maneuver == 'l':
+        self.turn_interval = 7  # unit: s
+        self.env_time_interval = 0.2  # unit: 0.2s
+        self.dodge_missile = True  # start turn when missile is detected, if set true
+        if maneuver == "l":
             self.delta_heading_list = [0, 0, 0, 0]
-        elif maneuver == 'r':
-            self.delta_heading_list = [np.pi/2, 0, 0, 0]
-        elif maneuver == 'n':
-            self.delta_heading_list = [np.pi/2, np.pi/2, 0, 0]
+        elif maneuver == "r":
+            self.delta_heading_list = [np.pi / 2, 0, 0, 0]
+        elif maneuver == "n":
+            self.delta_heading_list = [np.pi / 2, np.pi / 2, 0, 0]
 
         self.target_altitude_list = [6096] * 4
         self.target_velocity_list = [243] * 4
@@ -92,14 +106,20 @@ class ManeuverAgent(BaselineAgent):
         self.rnn_states = np.zeros((1, 1, 128))
 
     def set_delta_value(self, observation):
-        step_list = np.arange(1, len(self.delta_heading_list)+1) * self.turn_interval / self.env_time_interval
+        step_list = (
+            np.arange(1, len(self.delta_heading_list) + 1)
+            * self.turn_interval
+            / self.env_time_interval
+        )
         if not self.dodge_missile or (len(observation) > 15 and observation[15] != 0):
             for i, interval in enumerate(step_list):
                 if self.step <= interval:
                     break
             delta_heading = self.delta_heading_list[i]
-            delta_altitude = (self.target_altitude_list[i] - observation[0]*5000) / 1000
-            delta_velocity = (self.target_velocity_list[i] - observation[5]*340) / 340
+            delta_altitude = (
+                self.target_altitude_list[i] - observation[0] * 5000
+            ) / 1000
+            delta_velocity = (self.target_velocity_list[i] - observation[5] * 340) / 340
             self.step += 1
         else:
             delta_heading = 0
@@ -110,11 +130,11 @@ class ManeuverAgent(BaselineAgent):
 
 
 def test_maneuver():
-    env = SingleCombatEnv(config_name='1v1/DodgeMissile/Selfplay')
+    env = SingleCombatEnv(config_name="1v1/DodgeMissile/Selfplay")
     env.seed(0)
     obs = env.reset()
     env.render()
-    agent0 = ManeuverAgent(agent_id=0, maneuver='n')
+    agent0 = ManeuverAgent(agent_id=0, maneuver="n")
     agent1 = PursueAgent(agent_id=1)
     reward_list = []
     step = 0
@@ -130,11 +150,11 @@ def test_maneuver():
             print(info)
             break
         step += 1
-    
+
     env.seed(0)
     obs = env.reset()
     env.render()
-    agent0 = ManeuverAgent(agent_id=0, maneuver='n')
+    agent0 = ManeuverAgent(agent_id=0, maneuver="n")
     agent1 = PursueAgent(agent_id=1)
     reward_list = []
     step = 0
@@ -154,5 +174,5 @@ def test_maneuver():
     # plt.savefig('rewards.png')
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     test_maneuver()

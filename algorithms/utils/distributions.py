@@ -1,3 +1,11 @@
+"""
+Author       : zzp@buaa.edu.cn
+Date         : 2024-11-11 16:07:45
+LastEditTime : 2024-11-11 18:20:52
+FilePath     : /LAG/algorithms/utils/distributions.py
+Description  : 
+"""
+
 import torch
 import torch.nn as nn
 
@@ -95,6 +103,7 @@ class DiagGaussian(nn.Module):
     def output_size(self) -> int:
         return self._num_outputs
 
+
 class BetaShootBernoulli(nn.Module):
     def __init__(self, num_inputs, num_outputs, gain=0.01):
         super(BetaShootBernoulli, self).__init__()
@@ -108,12 +117,12 @@ class BetaShootBernoulli(nn.Module):
 
     def forward(self, x, **kwargs):
         x = self.net(x)
-        x = self.constraint(x) # contrain alpha, beta >=0
-        x = 100 - self.constraint(100-x) # constrain alpha, beta <=100
+        x = self.constraint(x)  # constrain alpha, beta >=0
+        x = 100 - self.constraint(100 - x)  # constrain alpha, beta <=100
         alpha = 1 + x[:, 0].unsqueeze(-1)
         beta = 1 + x[:, 1].unsqueeze(-1)
-        alpha_0 = kwargs['alpha0']
-        beta_0 = kwargs['beta0']
+        alpha_0 = kwargs["alpha0"]
+        beta_0 = kwargs["beta0"]
         # print(f"{alpha}, {beta}, {alpha_0}, {beta_0}")
         p = (alpha + alpha_0) / (alpha + alpha_0 + beta + beta_0)
         return FixedBernoulli(p)
@@ -121,6 +130,7 @@ class BetaShootBernoulli(nn.Module):
     @property
     def output_size(self) -> int:
         return self._num_outputs
+
 
 class Bernoulli(nn.Module):
     def __init__(self, num_inputs, num_outputs, gain=0.01):

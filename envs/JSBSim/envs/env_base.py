@@ -17,16 +17,20 @@ class BaseEnv(gymnasium.Env):
     aircraft control task with its own specific observation/action space and
     variables and agent_reward calculation.
     """
+
     metadata = {"render.modes": ["human", "txt"]}
 
     def __init__(self, config_name: str):
         # basic args
         self.config = parse_config(config_name)
-        self.max_steps = getattr(self.config, 'max_steps', 100)  # type: int
-        self.sim_freq = getattr(self.config, 'sim_freq', 60)  # type: int
-        self.agent_interaction_steps = getattr(self.config, 'agent_interaction_steps', 12)  # type: int
-        self.center_lon, self.center_lat, self.center_alt = \
-            getattr(self.config, 'battle_field_center', (120.0, 60.0, 0.0))
+        self.max_steps = getattr(self.config, "max_steps", 100)  # type: int
+        self.sim_freq = getattr(self.config, "sim_freq", 60)  # type: int
+        self.agent_interaction_steps = getattr(
+            self.config, "agent_interaction_steps", 12
+        )  # type: int
+        self.center_lon, self.center_lat, self.center_alt = getattr(
+            self.config, "battle_field_center", (120.0, 60.0, 0.0)
+        )
         self._create_records = False
         self.load()
 
@@ -59,20 +63,25 @@ class BaseEnv(gymnasium.Env):
         self.task = BaseTask(self.config)
 
     def load_simulator(self):
-        self._jsbsims = {}     # type: Dict[str, AircraftSimulator]
+        self._jsbsims = {}  # type: Dict[str, AircraftSimulator]
         for uid, config in self.config.aircraft_configs.items():
             self._jsbsims[uid] = AircraftSimulator(
                 uid=uid,
                 color=config.get("color", "Red"),
                 model=config.get("model", "f16"),
                 init_state=config.get("init_state"),
-                origin=getattr(self.config, 'battle_field_center', (120.0, 60.0, 0.0)),
+                origin=getattr(self.config, "battle_field_center", (120.0, 60.0, 0.0)),
                 sim_freq=self.sim_freq,
-                num_missiles=config.get("missile", 0))
+                num_missiles=config.get("missile", 0),
+            )
         # Different teams have different uid[0]
         _default_team_uid = list(self._jsbsims.keys())[0][0]
-        self.ego_ids = [uid for uid in self._jsbsims.keys() if uid[0] == _default_team_uid]
-        self.enm_ids = [uid for uid in self._jsbsims.keys() if uid[0] != _default_team_uid]
+        self.ego_ids = [
+            uid for uid in self._jsbsims.keys() if uid[0] == _default_team_uid
+        ]
+        self.enm_ids = [
+            uid for uid in self._jsbsims.keys() if uid[0] != _default_team_uid
+        ]
 
         # Link jsbsims
         for key, sim in self._jsbsims.items():
@@ -84,7 +93,7 @@ class BaseEnv(gymnasium.Env):
                 else:
                     sim.enemies.append(s)
 
-        self._tempsims = {}    # type: Dict[str, BaseSimulator]
+        self._tempsims = {}  # type: Dict[str, BaseSimulator]
 
     def add_temp_simulator(self, sim: BaseSimulator):
         self._tempsims[sim.uid] = sim
@@ -105,7 +114,9 @@ class BaseEnv(gymnasium.Env):
         obs = self.get_obs()
         return self._pack(obs)
 
-    def step(self, action: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, dict]:
+    def step(
+        self, action: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, dict]:
         """Run one timestep of the environment's dynamics. When end of
         episode is reached, you are responsible for calling `reset()`
         to reset this environment's observation. Accepts an action and
@@ -117,8 +128,11 @@ class BaseEnv(gymnasium.Env):
         Returns:
             (tuple):
                 obs: agents' observation of the current environment
+
                 rewards: amount of rewards returned after previous actions
+
                 dones: whether the episode has ended, in which case further step() calls are undefined
+
                 info: auxiliary information
         """
         self.current_step += 1
@@ -153,17 +167,23 @@ class BaseEnv(gymnasium.Env):
     def get_obs(self):
         """Returns all agent observations in a list.
 
-        NOTE: Agents should have access only to their local observations
-        during decentralised execution.
+        NOTE: Agents should have access only to their local observations during decentralized execution.
         """
-        return dict([(agent_id, self.task.get_obs(self, agent_id)) for agent_id in self.agents.keys()])
+        return dict(
+            [
+                (agent_id, self.task.get_obs(self, agent_id))
+                for agent_id in self.agents.keys()
+            ]
+        )
 
     def get_state(self):
         """Returns the global state.
 
-        NOTE: This functon should not be used during decentralised execution.
+        NOTE: This function should not be used during decentralized execution.
         """
-        state = np.hstack([self.task.get_obs(self, agent_id) for agent_id in self.agents.keys()])
+        state = np.hstack(
+            [self.task.get_obs(self, agent_id) for agent_id in self.agents.keys()]
+        )
         return dict([(agent_id, state.copy()) for agent_id in self.agents.keys()])
 
     def close(self):
@@ -179,7 +199,7 @@ class BaseEnv(gymnasium.Env):
         self._jsbsims.clear()
         self._tempsims.clear()
 
-    def render(self, mode="txt", filepath='./JSBSimRecording.txt.acmi'):
+    def render(self, mode="txt", filepath="./JSBSimRecording.txt.acmi"):
         """Renders the environment.
 
         The set of supported modes varies per environment. (And some
@@ -191,21 +211,22 @@ class BaseEnv(gymnasium.Env):
         - human: print on the terminal
         - txt: output to txt.acmi files
 
-        Note:
+        NOTE:
 
-            Make sure that your class's metadata 'render.modes' key includes
-              the list of supported modes. It's recommended to call super()
-              in implementations to use the functionality of this method.
+            Make sure that your class metadata 'render.modes' key includes
+            the list of supported modes. It recommended to call super()
+            in implementations to use the functionality of this method.
+
         :param mode: str, the mode to render with
         """
         if mode == "txt":
             if not self._create_records:
-                with open(filepath, mode='w', encoding='utf-8-sig') as f:
+                with open(filepath, mode="w", encoding="utf-8-sig") as f:
                     f.write("FileType=text/acmi/tacview\n")
                     f.write("FileVersion=2.1\n")
                     f.write("0,ReferenceTime=2020-04-01T00:00:00Z\n")
                 self._create_records = True
-            with open(filepath, mode='a', encoding='utf-8-sig') as f:
+            with open(filepath, mode="a", encoding="utf-8-sig") as f:
                 timestamp = self.current_step * self.time_interval
                 f.write(f"#{timestamp:.2f}\n")
                 for sim in self._jsbsims.values():
@@ -217,28 +238,30 @@ class BaseEnv(gymnasium.Env):
                     if log_msg is not None:
                         f.write(log_msg + "\n")
         # TODO: real time rendering [Use FlightGear, etc.]
+        # TODO(zzp): `human` rendering mode
         else:
             raise NotImplementedError
 
     def seed(self, seed=None):
-        """
-        Sets the seed for this env's random number generator(s).
-        Note:
+        """Sets the seed for this env random number generator(s).
+
+        NOTE:
             Some environments use multiple pseudorandom number generators.
             We want to capture all such seeds used in order to ensure that
             there aren't accidental correlations between multiple generators.
+
         Returns:
-            list<bigint>: Returns the list of seeds used in this env's random
-              number generators. The first value in the list should be the
-              "main" seed, or the value which a reproducer should pass to
-              'seed'. Often, the main seed equals the provided 'seed', but
-              this won't be true if seed=None, for example.
+            list<bigint>: Returns the list of seeds used in this envs random
+            number generators. The first value in the list should be the
+            "main" seed, or the value which a reproducer should pass to
+            'seed'. Often, the main seed equals the provided 'seed', but
+            this won't be true if seed=None, for example.
         """
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
     def _pack(self, data: Dict[str, Any]) -> np.ndarray:
-        """Pack seperated key-value dict into grouped np.ndarray"""
+        """Pack separated key-value dict into grouped np.ndarray"""
         ego_data = np.array([data[uid] for uid in self.ego_ids])
         enm_data = np.array([data[uid] for uid in self.enm_ids])
         if enm_data.shape[0] > 0:
@@ -249,16 +272,19 @@ class BaseEnv(gymnasium.Env):
             assert np.isnan(data).sum() == 0
         except AssertionError:
             import pdb
+
             pdb.set_trace()
         # only return data that belongs to RL agents
-        return data[:self.num_agents, ...]
+        return data[: self.num_agents, ...]
 
     def _unpack(self, data: np.ndarray) -> Dict[str, Any]:
-        """Unpack grouped np.ndarray into seperated key-value dict"""
-        assert isinstance(data, (np.ndarray, list, tuple)) and len(data) == self.num_agents
+        """Unpack grouped np.ndarray into separated key-value dict"""
+        assert (
+            isinstance(data, (np.ndarray, list, tuple)) and len(data) == self.num_agents
+        )
         # unpack data in the same order to packing process
-        unpack_data = dict(zip((self.ego_ids + self.enm_ids)[:self.num_agents], data))
+        unpack_data = dict(zip((self.ego_ids + self.enm_ids)[: self.num_agents], data))
         # fill in None for other not-RL agents
-        for agent_id in (self.ego_ids + self.enm_ids)[self.num_agents:]:
+        for agent_id in (self.ego_ids + self.enm_ids)[self.num_agents :]:
             unpack_data[agent_id] = None
         return unpack_data

@@ -1,3 +1,11 @@
+"""
+Author       : zzp@buaa.edu.cn
+Date         : 2024-11-11 16:07:45
+LastEditTime : 2024-11-11 18:09:27
+FilePath     : /LAG/envs/JSBSim/tasks/task_base.py
+Description  : 
+"""
+
 import numpy as np
 from gymnasium import spaces
 from typing import List, Tuple

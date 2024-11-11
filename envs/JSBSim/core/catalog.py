@@ -40,9 +40,7 @@ class JsbsimCatalog(Property, Enum):
     position_lat_gc_rad = Property("position/lat-gc-rad", "rad")
     position_long_gc_deg = Property("position/long-gc-deg", "geodesic longitude [deg]", -180, 180)
     position_long_gc_rad = Property("position/long-gc-rad", "rad")
-    position_distance_from_start_mag_mt = Property(
-        "position/distance-from-start-mag-mt", "distance travelled from starting position [m]", access="R"
-    )
+    position_distance_from_start_mag_mt = Property("position/distance-from-start-mag-mt", "distance traveled from starting position [m]", access="R")
     position_distance_from_start_lat_mt = Property("position/distance-from-start-lat-mt", "mt", access="R")
     position_distance_from_start_lon_mt = Property("position/distance-from-start-lon-mt", "mt", access="R")
     position_epa_rad = Property("position/epa-rad", "rad", access="R")
@@ -72,51 +70,29 @@ class JsbsimCatalog(Property, Enum):
     velocities_vg_fps = Property("velocities/vg-fps", "fps", access="R")
     velocities_vt_fps = Property("velocities/vt-fps", "fps", access="R")
     velocities_p_rad_sec = Property("velocities/p-rad_sec", "roll rate [rad/s]", -2 * math.pi, 2 * math.pi, access="R")
-    velocities_q_rad_sec = Property(
-        "velocities/q-rad_sec", "pitch rate [rad/s]", -2 * math.pi, 2 * math.pi, access="R"
-    )
+    velocities_q_rad_sec = Property("velocities/q-rad_sec", "pitch rate [rad/s]", -2 * math.pi, 2 * math.pi, access="R")
     velocities_r_rad_sec = Property("velocities/r-rad_sec", "yaw rate [rad/s]", -2 * math.pi, 2 * math.pi, access="R")
     velocities_p_aero_rad_sec = Property("velocities/p-aero-rad_sec", "rad/sec", access="R")
     velocities_q_aero_rad_sec = Property("velocities/q-aero-rad_sec", "rad/sec", access="R")
     velocities_r_aero_rad_sec = Property("velocities/r-aero-rad_sec", "rad/sec", access="R")
-    velocities_phidot_rad_sec = Property("velocities/phidot-rad_sec", "rad/s", -2 * math.pi, 2 * math.pi, access="R")
-    velocities_thetadot_rad_sec = Property(
-        "velocities/thetadot-rad_sec", "rad/s", -2 * math.pi, 2 * math.pi, access="R"
-    )
-    velocities_psidot_rad_sec = Property("velocities/psidot-rad_sec", "rad/sec", -2 * math.pi, 2 * math.pi, access="R")
+    velocities_phi_dot_rad_sec = Property("velocities/phi_dot-rad_sec", "rad/s", -2 * math.pi, 2 * math.pi, access="R")
+    velocities_theta_dot_rad_sec = Property("velocities/theta_dot-rad_sec", "rad/s", -2 * math.pi, 2 * math.pi, access="R")
+    velocities_psi_dot_rad_sec = Property("velocities/psi_dot-rad_sec", "rad/sec", -2 * math.pi, 2 * math.pi, access="R")
 
     # Acceleration
 
-    accelerations_pdot_rad_sec2 = Property(
-        "accelerations/pdot-rad_sec2", "rad/sÂ²", -(8 / 180) * math.pi, (8 / 180) * math.pi, access="R"
-    )
-    accelerations_qdot_rad_sec2 = Property(
-        "accelerations/qdot-rad_sec2", "rad/sÂ²", -(8 / 180) * math.pi, (8 / 180) * math.pi, access="R"
-    )
-    accelerations_rdot_rad_sec2 = Property(
-        "accelerations/rdot-rad_sec2", "rad/sÂ²", -(8 / 180) * math.pi, (8 / 180) * math.pi, access="R"
-    )
-    accelerations_vdot_ft_sec2 = Property("accelerations/vdot-ft_sec2", "ft/sÂ²", -4.0, 4.0, access="R")
-    accelerations_wdot_ft_sec2 = Property("accelerations/wdot-ft_sec2", "ft/sÂ²", -4.0, 4.0, access="R")
-    accelerations_udot_ft_sec2 = Property("accelerations/udot-ft_sec2", "ft/sÂ²", -4.0, 4.0, access="R")
-    accelerations_a_pilot_x_ft_sec2 = Property(
-        "accelerations/a-pilot-x-ft_sec2", "pilot body x-axis acceleration [ft/sÂ²]", access="R"
-    )
-    accelerations_a_pilot_y_ft_sec2 = Property(
-        "accelerations/a-pilot-y-ft_sec2", "pilot body y-axis acceleration [ft/sÂ²]", access="R"
-    )
-    accelerations_a_pilot_z_ft_sec2 = Property(
-        "accelerations/a-pilot-z-ft_sec2", "pilot body z-axis acceleration [ft/sÂ²]", access="R"
-    )
-    accelerations_n_pilot_x_norm = Property(
-        "accelerations/n-pilot-x-norm", "pilot body x-axis acceleration, normalised", access="R"
-    )
-    accelerations_n_pilot_y_norm = Property(
-        "accelerations/n-pilot-y-norm", "pilot body y-axis acceleration, normalised", access="R"
-    )
-    accelerations_n_pilot_z_norm = Property(
-        "accelerations/n-pilot-z-norm", "pilot body z-axis acceleration, normalised", access="R"
-    )
+    accelerations_p_dot_rad_sec2 = Property("accelerations/p_dot-rad_sec2", "rad/sÂ²", -(8 / 180) * math.pi, (8 / 180) * math.pi, access="R")
+    accelerations_q_dot_rad_sec2 = Property("accelerations/q_dot-rad_sec2", "rad/sÂ²", -(8 / 180) * math.pi, (8 / 180) * math.pi, access="R")
+    accelerations_r_dot_rad_sec2 = Property("accelerations/r_dot-rad_sec2", "rad/sÂ²", -(8 / 180) * math.pi, (8 / 180) * math.pi, access="R")
+    accelerations_v_dot_ft_sec2 = Property("accelerations/v_dot-ft_sec2", "ft/sÂ²", -4.0, 4.0, access="R")
+    accelerations_w_dot_ft_sec2 = Property("accelerations/w_dot-ft_sec2", "ft/sÂ²", -4.0, 4.0, access="R")
+    accelerations_u_dot_ft_sec2 = Property("accelerations/u_dot-ft_sec2", "ft/sÂ²", -4.0, 4.0, access="R")
+    accelerations_a_pilot_x_ft_sec2 = Property("accelerations/a-pilot-x-ft_sec2", "pilot body x-axis acceleration [ft/sÂ²]", access="R")
+    accelerations_a_pilot_y_ft_sec2 = Property("accelerations/a-pilot-y-ft_sec2", "pilot body y-axis acceleration [ft/sÂ²]", access="R")
+    accelerations_a_pilot_z_ft_sec2 = Property("accelerations/a-pilot-z-ft_sec2", "pilot body z-axis acceleration [ft/sÂ²]", access="R")
+    accelerations_n_pilot_x_norm = Property("accelerations/n-pilot-x-norm", "pilot body x-axis acceleration, normalized", access="R")
+    accelerations_n_pilot_y_norm = Property("accelerations/n-pilot-y-norm", "pilot body y-axis acceleration, normalized", access="R")
+    accelerations_n_pilot_z_norm = Property("accelerations/n-pilot-z-norm", "pilot body z-axis acceleration, normalized", access="R")
 
     # aero
 
@@ -149,22 +125,20 @@ class JsbsimCatalog(Property, Enum):
     def update_equal_advance_pos(sim):
         JsbsimCatalog.update_equal_engine_props(sim, JsbsimCatalog.fcs_advance_pos_norm)
 
-    fcs_left_aileron_pos_norm = Property("fcs/left-aileron-pos-norm", "left aileron position, normalised", -1, 1)
-    fcs_right_aileron_pos_norm = Property("fcs/right-aileron-pos-norm", "right aileron position, normalised", -1, 1)
-    fcs_elevator_pos_norm = Property("fcs/elevator-pos-norm", "elevator position, normalised", -1, 1)
-    fcs_rudder_pos_norm = Property("fcs/rudder-pos-norm", "rudder position, normalised", -1, 1)
-    fcs_flap_pos_norm = Property("fcs/flap-pos-norm", "flap position, normalised", 0, 1)
-    fcs_speedbrake_pos_norm = Property("fcs/speedbrake-pos-norm", "speedbrake position, normalised", 0, 1)
-    fcs_spoiler_pos_norm = Property("fcs/spoiler-pos-norm", "normalised")
+    fcs_left_aileron_pos_norm = Property("fcs/left-aileron-pos-norm", "left aileron position, normalized", -1, 1)
+    fcs_right_aileron_pos_norm = Property("fcs/right-aileron-pos-norm", "right aileron position, normalized", -1, 1)
+    fcs_elevator_pos_norm = Property("fcs/elevator-pos-norm", "elevator position, normalized", -1, 1)
+    fcs_rudder_pos_norm = Property("fcs/rudder-pos-norm", "rudder position, normalized", -1, 1)
+    fcs_flap_pos_norm = Property("fcs/flap-pos-norm", "flap position, normalized", 0, 1)
+    fcs_speed_brake_pos_norm = Property("fcs/speed_brake-pos-norm", "speed brake position, normalized", 0, 1)
+    fcs_spoiler_pos_norm = Property("fcs/spoiler-pos-norm", "normalized")
     fcs_steer_pos_deg = Property("fcs/steer-pos-deg", "deg")
-    fcs_throttle_pos_norm = Property(
-        "fcs/throttle-pos-norm", "throttle position, normalised", 0, 1, update=update_equal_throttle_pos
-    )
-    fcs_mixture_pos_norm = Property("fcs/mixture-pos-norm", "normalised", update=update_equal_mixture_pos)
-    gear_gear_pos_norm = Property("gear/gear-pos-norm", "landing gear position, normalised", 0, 1)
+    fcs_throttle_pos_norm = Property("fcs/throttle-pos-norm", "throttle position, normalized", 0, 1, update=update_equal_throttle_pos)
+    fcs_mixture_pos_norm = Property("fcs/mixture-pos-norm", "normalized", update=update_equal_mixture_pos)
+    gear_gear_pos_norm = Property("gear/gear-pos-norm", "landing gear position, normalized", 0, 1)
     gear_num_units = Property("gear/num-units", "number of gears", access="R")
-    fcs_feather_pos_norm = Property("fcs/feather-pos-norm", "normalised", update=update_equal_feather_pos)
-    fcs_advance_pos_norm = Property("fcs/advance-pos-norm", "normalised", update=update_equal_advance_pos)
+    fcs_feather_pos_norm = Property("fcs/feather-pos-norm", "normalized", update=update_equal_feather_pos)
+    fcs_advance_pos_norm = Property("fcs/advance-pos-norm", "normalized", update=update_equal_advance_pos)
 
     # controls command
 
@@ -189,27 +163,21 @@ class JsbsimCatalog(Property, Enum):
     def update_equal_brake_cmd(sim):
         JsbsimCatalog.update_equal_brake_props(sim)
 
-    fcs_aileron_cmd_norm = Property("fcs/aileron-cmd-norm", "aileron commanded position, normalised", -1.0, 1.0)
-    fcs_elevator_cmd_norm = Property("fcs/elevator-cmd-norm", "elevator commanded position, normalised", -1.0, 1.0)
-    fcs_rudder_cmd_norm = Property("fcs/rudder-cmd-norm", "rudder commanded position, normalised", -1.0, 1.0)
-    fcs_throttle_cmd_norm = Property(
-        "fcs/throttle-cmd-norm", "throttle commanded position, normalised", 0.0, 0.9, update=update_equal_throttle_cmd
-    )
-    fcs_mixture_cmd_norm = Property(
-        "fcs/mixture-cmd-norm", "engine mixture setting, normalised", 0.0, 1.0, update=update_equal_mixture_cmd
-    )
-    gear_gear_cmd_norm = Property("gear/gear-cmd-norm", "all landing gear commanded position, normalised", 0.0, 1.0)
-    fcs_speedbrake_cmd_norm = Property("fcs/speedbrake-cmd-norm", "normalised")
+    fcs_aileron_cmd_norm = Property("fcs/aileron-cmd-norm", "aileron commanded position, normalized", -1.0, 1.0)
+    fcs_elevator_cmd_norm = Property("fcs/elevator-cmd-norm", "elevator commanded position, normalized", -1.0, 1.0)
+    fcs_rudder_cmd_norm = Property("fcs/rudder-cmd-norm", "rudder commanded position, normalized", -1.0, 1.0)
+    fcs_throttle_cmd_norm = Property("fcs/throttle-cmd-norm", "throttle commanded position, normalized", 0.0, 0.9, update=update_equal_throttle_cmd)
+    fcs_mixture_cmd_norm = Property("fcs/mixture-cmd-norm", "engine mixture setting, normalized", 0.0, 1.0, update=update_equal_mixture_cmd)
+    gear_gear_cmd_norm = Property("gear/gear-cmd-norm", "all landing gear commanded position, normalized", 0.0, 1.0)
+    fcs_speed_brake_cmd_norm = Property("fcs/speed_brake-cmd-norm", "normalized")
     fcs_left_brake_cmd_norm = Property("fcs/left-brake-cmd-norm", "Left brake command(normalized)", 0.0, 1.0)
-    fcs_center_brake_cmd_norm = Property(
-        "fcs/center-brake-cmd-norm", "normalised", 0.0, 1.0, update=update_equal_brake_cmd
-    )
+    fcs_center_brake_cmd_norm = Property("fcs/center-brake-cmd-norm", "normalized", 0.0, 1.0, update=update_equal_brake_cmd)
     fcs_right_brake_cmd_norm = Property("fcs/right-brake-cmd-norm", "Right brake command(normalized)", 0.0, 1.0)
-    fcs_spoiler_cmd_norm = Property("fcs/spoiler-cmd-norm", "normalised")
-    fcs_flap_cmd_norm = Property("fcs/flap-cmd-norm", "normalised")
+    fcs_spoiler_cmd_norm = Property("fcs/spoiler-cmd-norm", "normalized")
+    fcs_flap_cmd_norm = Property("fcs/flap-cmd-norm", "normalized")
     fcs_steer_cmd_norm = Property("fcs/steer-cmd-norm", "Steer command(normalized)", -1.0, 1.0)
-    fcs_advance_cmd_norm = Property("fcs/advance-cmd-norm", "normalised", update=update_equal_advance_cmd)
-    fcs_feather_cmd_norm = Property("fcs/feather-cmd-norm", "normalised", update=update_equal_feather_cmd)
+    fcs_advance_cmd_norm = Property("fcs/advance-cmd-norm", "normalized", update=update_equal_advance_cmd)
+    fcs_feather_cmd_norm = Property("fcs/feather-cmd-norm", "normalized", update=update_equal_feather_cmd)
 
     # initial conditions
 
@@ -452,7 +420,7 @@ class ExtraCatalog(Property, Enum):
         access="W",
         update=update_throttle_cmd_dir,
     )
-    incr_throttle = Property("fcs/incr-throttle", "incrementation throttle", 0, 1)
+    incr_throttle = Property("fcs/incr-throttle", "increment throttle", 0, 1)
     aileron_cmd_dir = Property(
         "fcs/aileron-cmd-dir",
         "direction to move the aileron",
@@ -462,7 +430,7 @@ class ExtraCatalog(Property, Enum):
         access="W",
         update=update_aileron_cmd_dir,
     )
-    incr_aileron = Property("fcs/incr-aileron", "incrementation aileron", 0, 1)
+    incr_aileron = Property("fcs/incr-aileron", "increment aileron", 0, 1)
     elevator_cmd_dir = Property(
         "fcs/elevator-cmd-dir",
         "direction to move the elevator",
@@ -472,7 +440,7 @@ class ExtraCatalog(Property, Enum):
         access="W",
         update=update_elevator_cmd_dir,
     )
-    incr_elevator = Property("fcs/incr-elevator", "incrementation elevator", 0, 1)
+    incr_elevator = Property("fcs/incr-elevator", "increment elevator", 0, 1)
     rudder_cmd_dir = Property(
         "fcs/rudder-cmd-dir",
         "direction to move the rudder",
@@ -482,7 +450,7 @@ class ExtraCatalog(Property, Enum):
         access="W",
         update=update_rudder_cmd_dir,
     )
-    incr_rudder = Property("fcs/incr-rudder", "incrementation rudder", 0, 1)
+    incr_rudder = Property("fcs/incr-rudder", "increment rudder", 0, 1)
 
     # detect functions
 
@@ -519,9 +487,7 @@ class ExtraCatalog(Property, Enum):
     target_vg = Property("tc/target-vg", "target ground velocity [ft/s]")
     target_time = Property("tc/target-time-sec", "target time [sec]", 0)
     target_latitude_geod_deg = Property("tc/target-latitude-geod-deg", "target geocentric latitude [deg]", -90, 90)
-    target_longitude_geod_deg = Property(
-        "tc/target-longitude-geod-deg", "target geocentric longitude [deg]", -180, 180
-    )
+    target_longitude_geod_deg = Property("tc/target-longitude-geod-deg", "target geocentric longitude [deg]", -180, 180)
     heading_check_time = Property("heading_check_time", "time to check whether current time reaches heading time", 0, 1000000)
 
 
@@ -530,15 +496,15 @@ class MixedCatalog(dict):
     A class to store both jsbsim & extra properties initiated and used during jsbsim simulation.
     """
 
-    def __getitem__(self, name):
+    def __getitem__(self, key):
         try:
-            return super().__getitem__(name)
+            return super().__getitem__(key)
         except KeyError:  # look for the property in ExtraCatalog and JsbsimCatalog
             try:
-                self[name] = ExtraCatalog[name].value
+                self[key] = ExtraCatalog[key].value
             except KeyError:
-                self[name] = JsbsimCatalog[name].value
-        return super().__getitem__(name)
+                self[key] = JsbsimCatalog[key].value
+        return super().__getitem__(key)
 
     def __getattr__(self, name):
         return self[name]
@@ -554,14 +520,14 @@ class MixedCatalog(dict):
                 continue  # skip empty line
             [name_jsbsim, access] = jsbsim_prop.split(" ")
             access = re.sub(r"[\(\)]", "", access)  # remove parenthesis from the flag
-            name = re.sub(r"_$", "", re.sub(r"[\-/\]\[]+", "_", name_jsbsim))  # get property name from jsbsim name
-            if name not in self:
-                assert name not in ExtraCatalog.__members__, \
-                    f"{name} has been defined in JSBSim, use another name in ExtraCatalog"
+            key = re.sub(r"_$", "", re.sub(r"[\-/\]\[]+", "_", name_jsbsim))  # get property name from jsbsim name
+            if key not in self:
+                assert key not in ExtraCatalog.__members__, \
+                    f"{key} has been defined in JSBSim, use another name in ExtraCatalog"
                 try:
-                    self[name] = JsbsimCatalog[name].value
+                    self[key] = JsbsimCatalog[key].value
                 except KeyError:
-                    self[name] = Property(name_jsbsim=name_jsbsim, access=access)
+                    self[key] = Property(name_jsbsim=name_jsbsim, access=access)
 
 
 # an instantiation of MixedCatalog used for simulation

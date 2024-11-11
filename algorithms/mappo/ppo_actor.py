@@ -1,3 +1,11 @@
+"""
+Author       : zzp@buaa.edu.cn
+Date         : 2024-11-11 16:07:45
+LastEditTime : 2024-11-11 18:15:22
+FilePath     : /LAG/algorithms/mappo/ppo_actor.py
+Description  : 
+"""
+
 import torch
 import torch.nn as nn
 
@@ -21,14 +29,23 @@ class PPOActor(nn.Module):
         self.recurrent_hidden_layers = args.recurrent_hidden_layers
         self.tpdv = dict(dtype=torch.float32, device=device)
         # (1) feature extraction module
-        self.base = MLPBase(obs_space, self.hidden_size, self.activation_id, self.use_feature_normalization)
+        self.base = MLPBase(
+            obs_space,
+            self.hidden_size,
+            self.activation_id,
+            self.use_feature_normalization,
+        )
         # (2) rnn module
         input_size = self.base.output_size
         if self.use_recurrent_policy:
-            self.rnn = GRULayer(input_size, self.recurrent_hidden_size, self.recurrent_hidden_layers)
+            self.rnn = GRULayer(
+                input_size, self.recurrent_hidden_size, self.recurrent_hidden_layers
+            )
             input_size = self.rnn.output_size
         # (3) act module
-        self.act = ACTLayer(act_space, input_size, self.act_hidden_size, self.activation_id, self.gain)
+        self.act = ACTLayer(
+            act_space, input_size, self.act_hidden_size, self.activation_id, self.gain
+        )
 
         self.to(device)
 
@@ -60,6 +77,8 @@ class PPOActor(nn.Module):
         if self.use_recurrent_policy:
             actor_features, rnn_states = self.rnn(actor_features, rnn_states, masks)
 
-        action_log_probs, dist_entropy = self.act.evaluate_actions(actor_features, action, active_masks)
+        action_log_probs, dist_entropy = self.act.evaluate_actions(
+            actor_features, action, active_masks
+        )
 
         return action_log_probs, dist_entropy

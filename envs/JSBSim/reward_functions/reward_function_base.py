@@ -1,18 +1,32 @@
+"""
+Author       : zzp@buaa.edu.cn
+Date         : 2024-11-11 16:07:45
+LastEditTime : 2024-11-11 17:52:53
+FilePath     : /LAG/envs/JSBSim/reward_functions/reward_function_base.py
+Description  : 
+"""
+
 import numpy as np
 from abc import ABC, abstractmethod
 from collections import defaultdict
 
 
 class BaseRewardFunction(ABC):
+    """Reward-specific reset and get_reward methods are implemented in subclasses
+
+    Args:
+        ABC (_type_): _description_
     """
-    Base RewardFunction class
-    Reward-specific reset and get_reward methods are implemented in subclasses
-    """
+
     def __init__(self, config):
         self.config = config
         # inner variables
-        self.reward_scale = getattr(self.config, f'{self.__class__.__name__}_scale', 1.0)
-        self.is_potential = getattr(self.config, f'{self.__class__.__name__}_potential', False)
+        self.reward_scale = getattr(
+            self.config, f"{self.__class__.__name__}_scale", 1.0
+        )
+        self.is_potential = getattr(
+            self.config, f"{self.__class__.__name__}_potential", False
+        )
         self.pre_rewards = defaultdict(float)
         self.reward_trajectory = defaultdict(list)
         self.reward_item_names = [self.__class__.__name__]
@@ -22,8 +36,8 @@ class BaseRewardFunction(ABC):
         Overwritten by subclasses.
 
         Args:
-            task: task instance
-            env: environment instance
+            task (_type_): _description_
+            env (_type_): _description_
         """
         if self.is_potential:
             self.pre_rewards.clear()
@@ -37,8 +51,9 @@ class BaseRewardFunction(ABC):
         Overwritten by subclasses.
 
         Args:
-            task: task instance
-            env: environment instance
+            task (_type_): _description_
+            env (_type_): _description_
+            agent_id (_type_): _description_
 
         Returns:
             (float): reward
@@ -46,19 +61,22 @@ class BaseRewardFunction(ABC):
         raise NotImplementedError
 
     def _process(self, new_reward, agent_id, render_items=()):
-        """Process reward and inner variables.
+        """Process reward and inner variables
 
         Args:
-            new_reward (float)
-            agent_id (str)
-            render_items (tuple, optional): Must set if `len(reward_item_names)>1`. Defaults to None.
+            new_reward (float): _description_
+            agent_id (str): _description_
+            render_items (tuple, optional): Must set if `len(reward_item_names) > 1`. Defaults to None.
 
         Returns:
             [type]: [description]
         """
         reward = new_reward * self.reward_scale
         if self.is_potential:
-            reward, self.pre_rewards[agent_id] = reward - self.pre_rewards[agent_id], reward
+            reward, self.pre_rewards[agent_id] = (
+                reward - self.pre_rewards[agent_id],
+                reward,
+            )
         self.reward_trajectory[agent_id].append([reward, *render_items])
         return reward
 
@@ -68,4 +86,9 @@ class BaseRewardFunction(ABC):
         Returns:
             (dict): {reward_name(str): reward_trajectory(np.array)}
         """
-        return dict(zip(self.reward_item_names, np.array(self.reward_trajectory.values()).transpose(2, 0, 1)))
+        return dict(
+            zip(
+                self.reward_item_names,
+                np.array(self.reward_trajectory.values()).transpose(2, 0, 1),
+            )
+        )

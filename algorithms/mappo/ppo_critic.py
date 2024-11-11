@@ -1,3 +1,11 @@
+"""
+Author       : zzp@buaa.edu.cn
+Date         : 2024-11-11 16:07:45
+LastEditTime : 2024-11-11 18:15:30
+FilePath     : /LAG/algorithms/mappo/ppo_critic.py
+Description  : 
+"""
+
 import torch
 import torch.nn as nn
 
@@ -19,11 +27,18 @@ class PPOCritic(nn.Module):
         self.recurrent_hidden_layers = args.recurrent_hidden_layers
         self.tpdv = dict(dtype=torch.float32, device=device)
         # (1) feature extraction module
-        self.base = MLPBase(obs_space, self.hidden_size, self.activation_id, self.use_feature_normalization)
-        # (2) rnn module 
+        self.base = MLPBase(
+            obs_space,
+            self.hidden_size,
+            self.activation_id,
+            self.use_feature_normalization,
+        )
+        # (2) rnn module
         input_size = self.base.output_size
         if self.use_recurrent_policy:
-            self.rnn = GRULayer(input_size, self.recurrent_hidden_size, self.recurrent_hidden_layers)
+            self.rnn = GRULayer(
+                input_size, self.recurrent_hidden_size, self.recurrent_hidden_layers
+            )
             input_size = self.rnn.output_size
         # (3) value module
         if len(self.act_hidden_size) > 0:

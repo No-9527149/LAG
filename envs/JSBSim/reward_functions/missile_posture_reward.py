@@ -1,3 +1,11 @@
+"""
+Author       : zzp@buaa.edu.cn
+Date         : 2024-11-11 16:07:45
+LastEditTime : 2024-11-11 18:06:25
+FilePath     : /LAG/envs/JSBSim/reward_functions/missile_posture_reward.py
+Description  : 
+"""
+
 import numpy as np
 from .reward_function_base import BaseRewardFunction
 
@@ -7,6 +15,7 @@ class MissilePostureReward(BaseRewardFunction):
     MissilePostureReward
     Use the velocity attenuation
     """
+
     def __init__(self, config):
         super().__init__(config)
         self.previous_missile_v = None
@@ -33,8 +42,15 @@ class MissilePostureReward(BaseRewardFunction):
             aircraft_v = env.agents[agent_id].get_velocity()
             if self.previous_missile_v is None:
                 self.previous_missile_v = missile_v
-            v_decrease = (np.linalg.norm(self.previous_missile_v) - np.linalg.norm(missile_v)) / 340 * self.reward_scale
-            angle = np.dot(missile_v, aircraft_v) / (np.linalg.norm(missile_v) * np.linalg.norm(aircraft_v))
+            # TODO(zzp): reward_scale
+            v_decrease = (
+                (np.linalg.norm(self.previous_missile_v) - np.linalg.norm(missile_v))
+                / 340
+                * self.reward_scale
+            )
+            angle = np.dot(missile_v, aircraft_v) / (
+                np.linalg.norm(missile_v) * np.linalg.norm(aircraft_v)
+            )
             if angle < 0:
                 reward = angle / (max(v_decrease, 0) + 1)
             else:
