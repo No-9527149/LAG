@@ -13,13 +13,12 @@ TeamColors = Literal["Red", "Blue", "Green", "Violet", "Orange"]
 
 
 class BaseSimulator(ABC):
-
     def __init__(self, uid: str, color: TeamColors, dt: float):
         """Constructor. Creates an instance of simulator, initialize all the available properties.
 
         Args:
             uid (str): 5-digits hexadecimal numbers for unique identification.
-            color (TeamColors): use different color strings to represent diferent teams
+            color (TeamColors): use different color strings to represent different teams
             dt (float): simulation timestep. Default = `1 / 60`.
         """
         self.__uid = uid
@@ -30,7 +29,7 @@ class BaseSimulator(ABC):
         self._position = np.zeros(3)
         self._posture = np.zeros(3)
         self._velocity = np.zeros(3)
-        logging.debug(f"{self.__class__.__name__}:{self.__uid} is created!")
+        logging.debug(f"{self.__class__.__name__}: {self.__uid} is created!")
 
     @property
     def uid(self) -> str:
@@ -45,7 +44,7 @@ class BaseSimulator(ABC):
         return self.__dt
 
     def get_geodetic(self):
-        """(lontitude, latitude, altitude), unit: °, m"""
+        """(longitude, latitude, altitude), unit: °, m"""
         return self._geodetic
 
     def get_position(self):
@@ -73,6 +72,7 @@ class BaseSimulator(ABC):
     def log(self):
         lon, lat, alt = self.get_geodetic()
         roll, pitch, yaw = self.get_rpy() * 180 / np.pi
+        # TODO(zzp): log in tacview.txt.acmi
         log_msg = f"{self.uid},T={lon}|{lat}|{alt}|{roll}|{pitch}|{yaw},"
         log_msg += f"Name={self.model.upper()},"
         log_msg += f"Color={self.color}"
@@ -83,29 +83,31 @@ class BaseSimulator(ABC):
         pass
 
     def __del__(self):
-        logging.debug(f"{self.__class__.__name__}:{self.uid} is deleted!")
+        logging.debug(f"{self.__class__.__name__}: {self.uid} is deleted!")
 
 
 class AircraftSimulator(BaseSimulator):
-    """A class which wraps an instance of JSBSim and manages communication with it.
-    """
+    """A class which wraps an instance of JSBSim and manages communication with it."""
 
     ALIVE = 0
-    CRASH = 1       # low altitude / extreme state / overload
-    SHOTDOWN = 2    # missile attack
+    CRASH = 1  # low altitude / extreme state / overload
+    SHOT_DOWN = 2  # missile attack
 
-    def __init__(self,
-                 uid: str = "A0100",
-                 color: TeamColors = "Red",
-                 model: str = 'f16',
-                 init_state: dict = {},
-                 origin: tuple = (120.0, 60.0, 0.0),
-                 sim_freq: int = 60, **kwargs):
+    def __init__(
+        self,
+        uid: str = "A0100",
+        color: TeamColors = "Red",
+        model: str = "f16",
+        init_state: dict = {},
+        origin: tuple = (120.0, 60.0, 0.0),
+        sim_freq: int = 60,
+        **kwargs,
+    ):
         """Constructor. Creates an instance of JSBSim, loads an aircraft and sets initial conditions.
 
         Args:
             uid (str): 5-digits hexadecimal numbers for unique identification. Default = `"A0100"`.
-            color (TeamColors): use different color strings to represent diferent teams
+            color (TeamColors): use different color strings to represent different teams
             model (str): name of aircraft to be loaded. Default = `"f16"`.
                 model path: './data/aircraft_name/aircraft_name.xml'
             init_state (dict): dict mapping properties to their initial values. Input empty dict to use a default set of initial props.
@@ -119,15 +121,16 @@ class AircraftSimulator(BaseSimulator):
         self.bloods = 100
         self.__status = AircraftSimulator.ALIVE
         for key, value in kwargs.items():
-            if key == 'num_missiles':
+            if key == "num_missiles":
                 self.num_missiles = value  # type: int
-                self.num_left_missiles = self.num_missiles  # type: int
+                # TODO(zzp): AircraftSimulator self.num_left_missiles -> self.num_remaining_missiles
+                self.num_remaining_missiles = self.num_missiles  # type: int
         # fixed simulator links
         self.partners = []  # type: List[AircraftSimulator]
-        self.enemies = []   # type: List[AircraftSimulator]
+        self.enemies = []  # type: List[AircraftSimulator]
         # temp simulator links
-        self.launch_missiles = []   # type: List[MissileSimulator]
-        self.under_missiles = []    # type: List[MissileSimulator]
+        self.launch_missiles = []  # type: List[MissileSimulator]
+        self.under_missiles = []  # type: List[MissileSimulator]
         # initialize simulator
         self.reload()
 
@@ -140,18 +143,19 @@ class AircraftSimulator(BaseSimulator):
         return self.__status == AircraftSimulator.CRASH
 
     @property
-    def is_shotdown(self):
-        return self.__status == AircraftSimulator.SHOTDOWN
+    def is_shot_down(self):
+        return self.__status == AircraftSimulator.SHOT_DOWN
 
     def crash(self):
         self.__status = AircraftSimulator.CRASH
 
-    def shotdown(self):
-        self.__status = AircraftSimulator.SHOTDOWN
+    def shot_down(self):
+        self.__status = AircraftSimulator.SHOT_DOWN
 
-    def reload(self, new_state: Union[dict, None] = None, new_origin: Union[tuple, None] = None):
-        """Reload aircraft simulator
-        """
+    def reload(
+        self, new_state: Union[dict, None] = None, new_origin: Union[tuple, None] = None
+    ):
+        """Reload aircraft simulator"""
         super().reload()
 
         # reset temp simulator links
@@ -159,15 +163,15 @@ class AircraftSimulator(BaseSimulator):
         self.__status = AircraftSimulator.ALIVE
         self.launch_missiles.clear()
         self.under_missiles.clear()
-        self.num_left_missiles = self.num_missiles
+        self.num_remaining_missiles = self.num_missiles
 
         # load JSBSim FDM
-        self.jsbsim_exec = jsbsim.FGFDMExec(os.path.join(get_root_dir(), 'data'))
+        self.jsbsim_exec = jsbsim.FGFDMExec(os.path.join(get_root_dir(), "data"))
         self.jsbsim_exec.set_debug_level(0)
         self.jsbsim_exec.load_model(self.model)
         Catalog.add_jsbsim_props(self.jsbsim_exec.query_property_catalog(""))
         self.jsbsim_exec.set_dt(self.dt)
-        self.clear_defalut_condition()
+        self.clear_default_condition()
 
         # assign new properties
         if new_state is not None:
@@ -176,6 +180,7 @@ class AircraftSimulator(BaseSimulator):
             self.lon0, self.lat0, self.alt0 = new_origin
         for key, value in self.init_state.items():
             self.set_property_value(Catalog[key], value)
+        # TODO(zzp): what is run_ic()?
         success = self.jsbsim_exec.run_ic()
         if not success:
             raise RuntimeError("JSBSim failed to init simulation conditions.")
@@ -189,19 +194,21 @@ class AircraftSimulator(BaseSimulator):
         # update inner property
         self._update_properties()
 
-    def clear_defalut_condition(self):
+    def clear_default_condition(self):
         default_condition = {
+            # ? BUG(zzp): ic_long_gc_deg OR ic_long_geod_deg ?
             Catalog.ic_long_gc_deg: 120.0,  # geodesic longitude [deg]
+            # ? BUG(zzp): ic_lat_gc_deg OR ic_lat_geod_deg ?
             Catalog.ic_lat_geod_deg: 60.0,  # geodesic latitude  [deg]
-            Catalog.ic_h_sl_ft: 20000,      # altitude above mean sea level [ft]
-            Catalog.ic_psi_true_deg: 0.0,   # initial (true) heading [deg] (0, 360)
-            Catalog.ic_u_fps: 800.0,        # body frame x-axis velocity [ft/s]  (-2200, 2200)
-            Catalog.ic_v_fps: 0.0,          # body frame y-axis velocity [ft/s]  (-2200, 2200)
-            Catalog.ic_w_fps: 0.0,          # body frame z-axis velocity [ft/s]  (-2200, 2200)
-            Catalog.ic_p_rad_sec: 0.0,      # roll rate  [rad/s]  (-2 * pi, 2 * pi)
-            Catalog.ic_q_rad_sec: 0.0,      # pitch rate [rad/s]  (-2 * pi, 2 * pi)
-            Catalog.ic_r_rad_sec: 0.0,      # yaw rate   [rad/s]  (-2 * pi, 2 * pi)
-            Catalog.ic_roc_fpm: 0.0,        # initial rate of climb [ft/min]
+            Catalog.ic_h_sl_ft: 20000,  # altitude above mean sea level [ft]
+            Catalog.ic_psi_true_deg: 0.0,  # initial (true) heading [deg] (0, 360)
+            Catalog.ic_u_fps: 800.0,  # body frame x-axis velocity [ft/s]  (-2200, 2200)
+            Catalog.ic_v_fps: 0.0,  # body frame y-axis velocity [ft/s]  (-2200, 2200)
+            Catalog.ic_w_fps: 0.0,  # body frame z-axis velocity [ft/s]  (-2200, 2200)
+            Catalog.ic_p_rad_sec: 0.0,  # roll rate  [rad/s]  (-2 * pi, 2 * pi)
+            Catalog.ic_q_rad_sec: 0.0,  # pitch rate [rad/s]  (-2 * pi, 2 * pi)
+            Catalog.ic_r_rad_sec: 0.0,  # yaw rate   [rad/s]  (-2 * pi, 2 * pi)
+            Catalog.ic_roc_fpm: 0.0,  # initial rate of climb [ft/min]
             Catalog.ic_terrain_elevation_ft: 0,
         }
         for prop, value in default_condition.items():
@@ -219,7 +226,7 @@ class AircraftSimulator(BaseSimulator):
         """
         if self.is_alive:
             if self.bloods <= 0:
-                self.shotdown()
+                self.shot_down()
             result = self.jsbsim_exec.run()
             if not result:
                 raise RuntimeError("JSBSim failed.")
@@ -229,7 +236,7 @@ class AircraftSimulator(BaseSimulator):
             return True
 
     def close(self):
-        """ Closes the simulation and any plots. """
+        """Closes the simulation and any plots."""
         if self.jsbsim_exec:
             self.jsbsim_exec = None
         self.partners = []
@@ -237,46 +244,54 @@ class AircraftSimulator(BaseSimulator):
 
     def _update_properties(self):
         # update position
-        self._geodetic[:] = self.get_property_values([
-            Catalog.position_long_gc_deg,
-            Catalog.position_lat_geod_deg,
-            Catalog.position_h_sl_m
-        ])
+        self._geodetic[:] = self.get_property_values(
+            [
+                Catalog.position_long_gc_deg,
+                Catalog.position_lat_geod_deg,
+                Catalog.position_h_sl_m,
+            ]
+        )
         self._position[:] = LLA2NEU(*self._geodetic, self.lon0, self.lat0, self.alt0)
         # update posture
-        self._posture[:] = self.get_property_values([
-            Catalog.attitude_roll_rad,
-            Catalog.attitude_pitch_rad,
-            Catalog.attitude_heading_true_rad,
-        ])
+        self._posture[:] = self.get_property_values(
+            [
+                Catalog.attitude_roll_rad,
+                Catalog.attitude_pitch_rad,
+                Catalog.attitude_heading_true_rad,
+            ]
+        )
         # update velocity
-        self._velocity[:] = self.get_property_values([
-            Catalog.velocities_v_north_mps,
-            Catalog.velocities_v_east_mps,
-            Catalog.velocities_v_down_mps,
-        ])
+        self._velocity[:] = self.get_property_values(
+            [
+                Catalog.velocities_v_north_mps,
+                Catalog.velocities_v_east_mps,
+                Catalog.velocities_v_down_mps,
+            ]
+        )
         # v_down -> v_up
         self._velocity[2] = -self._velocity[2]
 
     def get_sim_time(self):
-        """ Gets the simulation time from JSBSim, a float. """
+        """Gets the simulation time from JSBSim, a float."""
         return self.jsbsim_exec.get_sim_time()
 
     def get_property_values(self, props):
-        """Get the values of the specified properties
+        """Get the value of the specified property from the JSBSim simulation
 
-        :param props: list of Properties
+        Args:
+            prop (Property): Property
 
-        : return: NamedTupl e with properties name and their values
+        Returns:
+            float:
         """
         return [self.get_property_value(prop) for prop in props]
 
     def set_property_values(self, props, values):
         """Set the values of the specified properties
 
-        :param props: list of Properties
-
-        :param values: list of float
+        Args:
+            props (list): _description_
+            values (list): _description_
         """
         if not len(props) == len(values):
             raise ValueError("mismatch between properties and values size")
@@ -284,11 +299,13 @@ class AircraftSimulator(BaseSimulator):
             self.set_property_value(prop, value)
 
     def get_property_value(self, prop):
-        """Get the value of the specified property from the JSBSim simulation
+        """Get the values of the specified properties
 
-        :param prop: Property
+        Args:
+            props (list): list of properties
 
-        :return : float
+        Returns:
+            NameTuple: with properties name and values
         """
         if isinstance(prop, Property):
             if prop.access == "R":
@@ -299,11 +316,11 @@ class AircraftSimulator(BaseSimulator):
             raise ValueError(f"prop type unhandled: {type(prop)} ({prop})")
 
     def set_property_value(self, prop, value):
-        """Set the values of the specified property
+        """Set the value of the specified property
 
-        :param prop: Property
-
-        :param value: float
+        Args:
+            prop (Property): _description_
+            value (float): _description_
         """
         # set value in property bounds
         if isinstance(prop, Property):
@@ -311,9 +328,7 @@ class AircraftSimulator(BaseSimulator):
                 value = prop.min
             elif value > prop.max:
                 value = prop.max
-
             self.jsbsim_exec.set_property_value(prop.name_jsbsim, value)
-
             if "W" in prop.access:
                 if prop.update:
                     prop.update(self)
@@ -335,18 +350,20 @@ class MissileSimulator(BaseSimulator):
     MISS = 2
 
     @classmethod
-    def create(cls, parent: AircraftSimulator, target: AircraftSimulator, uid: str, missile_model: str = "AIM-9L"):
+    def create(
+        cls,
+        parent: AircraftSimulator,
+        target: AircraftSimulator,
+        uid: str,
+        missile_model: str = "AIM-9L",
+    ):
         assert parent.dt == target.dt, "integration timestep must be same!"
         missile = MissileSimulator(uid, parent.color, missile_model, parent.dt)
         missile.launch(parent)
         missile.target(target)
         return missile
 
-    def __init__(self,
-                 uid="A0101",
-                 color="Red",
-                 model="AIM-9L",
-                 dt=1 / 12):
+    def __init__(self, uid="A0101", color="Red", model="AIM-9L", dt: float = 1 / 12):
         super().__init__(uid, color, dt)
         self.__status = MissileSimulator.INACTIVE
         self.model = model
@@ -355,19 +372,19 @@ class MissileSimulator(BaseSimulator):
         self.render_explosion = False
 
         # missile parameters (for AIM-9L)
-        self._g = 9.81      # gravitational acceleration
-        self._t_max = 60    # time limitation of missile life
+        self._g = 9.81  # gravitational acceleration
+        self._t_max = 60  # time limitation of missile life
         self._t_thrust = 3  # time limitation of engine
-        self._Isp = 120     # average specific impulse
+        self._Isp = 120  # average specific impulse
         self._Length = 2.87
         self._Diameter = 0.127
-        self._cD = 0.4      # aerodynamic drag factor
-        self._m0 = 84       # mass, unit: kg
-        self._dm = 6        # mass loss rate, unit: kg/s
-        self._K = 3         # proportionality constant of proportional navigation
+        self._cD = 0.4  # aerodynamic drag factor
+        self._m0 = 84  # mass, unit: kg
+        self._dm = 6  # mass loss rate, unit: kg/s
+        self._K = 3  # proportionality constant of proportional navigation
         self._nyz_max = 30  # max overload
-        self._Rc = 300      # radius of explosion, unit: m
-        self._v_min = 150   # minimun velocity, unit: m/s
+        self._Rc = 300  # radius of explosion, unit: m
+        self._v_min = 150  # minimum velocity, unit: m/s
 
     @property
     def is_alive(self):
@@ -382,8 +399,10 @@ class MissileSimulator(BaseSimulator):
     @property
     def is_done(self):
         """Missile is already exploded"""
-        return self.__status == MissileSimulator.HIT \
+        return (
+            self.__status == MissileSimulator.HIT
             or self.__status == MissileSimulator.MISS
+        )
 
     @property
     def Isp(self):
@@ -392,14 +411,20 @@ class MissileSimulator(BaseSimulator):
     @property
     def K(self):
         """Proportional Guidance Coefficient"""
+        # TODO(zzp): dynamic K
         # return self._K
         return max(self._K * (self._t_max - self._t) / self._t_max, 0)
 
     @property
     def S(self):
         """Cross-Sectional area, unit m^2"""
-        S0 = np.pi * (self._Diameter / 2)**2
-        S0 += np.linalg.norm([np.sin(self._dtheta), np.sin(self._dphi)]) * self._Diameter * self._Length
+        S0 = np.pi * (self._Diameter / 2) ** 2
+        # TODO(zzp): why?
+        S0 += (
+            np.linalg.norm([np.sin(self._d_theta), np.sin(self._d_phi)])
+            * self._Diameter
+            * self._Length
+        )
         return S0
 
     @property
@@ -411,20 +436,20 @@ class MissileSimulator(BaseSimulator):
         rho0, T0, h = 1.225, 288.15, self._geodetic[-1]
         if h <= 11000:  # Troposphere
             T = T0 - 0.0065 * h
-            return rho0 * (T / T0)**4.25588
+            return rho0 * (T / T0) ** 4.25588
         elif h <= 20000:  # Lower Stratosphere
             T = 216.65
             return 0.36392 * np.exp((11000 - h) / 6341.62)
         else:  # Upper Stratosphere
             T = 216.65 + 0.001 * (h - 20000)
-            return 0.088035 * (T / 216.65)**(-35.1632)
+            return 0.088035 * (T / 216.65) ** (-35.1632)
 
     @property
     def target_distance(self) -> float:
         return np.linalg.norm(self.target_aircraft.get_position() - self.get_position())
 
     def launch(self, parent: AircraftSimulator):
-        # inherit kinetic parameters from parent aricraft
+        # inherit kinetic parameters from parent aircraft
         self.parent_aircraft = parent
         self.parent_aircraft.launch_missiles.append(self)
         self._geodetic[:] = parent.get_geodetic()
@@ -436,26 +461,36 @@ class MissileSimulator(BaseSimulator):
         # init status
         self._t = 0
         self._m = self._m0
-        self._dtheta, self._dphi = 0, 0
+        self._d_theta, self._d_phi = 0, 0
         self.__status = MissileSimulator.LAUNCHED
         self._distance_pre = np.inf
-        self._distance_increment = deque(maxlen=int(5 / self.dt))  # 5s of distance increment -- can't hit
+        self._distance_increment = deque(
+            maxlen=int(5 / self.dt)
+        )  # 5s of distance increment -- can't hit
         self._left_t = int(1 / self.dt)  # remove missile 1s after its destroying
 
     def target(self, target: AircraftSimulator):
-        self.target_aircraft = target  # TODO: change target?
+        # TODO(zzp): change target?
+        self.target_aircraft = target
         self.target_aircraft.under_missiles.append(self)
 
     def run(self):
         self._t += self.dt
         action, distance = self._guidance()
+        # NOTE(zzp): if the distance increases, append False in this step
         self._distance_increment.append(distance > self._distance_pre)
         self._distance_pre = distance
         if distance < self._Rc and self.target_aircraft.is_alive:
+            # NOTE(zzp): shot down prerequisite
             self.__status = MissileSimulator.HIT
-            self.target_aircraft.shotdown()
-        elif (self._t > self._t_max) or (np.linalg.norm(self.get_velocity()) < self._v_min) \
-                or np.sum(self._distance_increment) >= self._distance_increment.maxlen or not self.target_aircraft.is_alive:
+            self.target_aircraft.shot_down()
+        elif (
+            (self._t > self._t_max)
+            or (np.linalg.norm(self.get_velocity()) < self._v_min)
+            or np.sum(self._distance_increment) >= self._distance_increment.maxlen
+            or not self.target_aircraft.is_alive
+        ):
+            # NOTE(zzp): MISS prerequisite
             self.__status = MissileSimulator.MISS
         else:
             self._state_trans(action)
@@ -489,15 +524,21 @@ class MissileSimulator(BaseSimulator):
         theta_m = np.arcsin(dz_m / v_m)
         x_t, y_t, z_t = self.target_aircraft.get_position()
         dx_t, dy_t, dz_t = self.target_aircraft.get_velocity()
-        Rxy = np.linalg.norm([x_m - x_t, y_m - y_t])  # distance from missile to target project to X-Y plane
-        Rxyz = np.linalg.norm([x_m - x_t, y_m - y_t, z_t - z_m])  # distance from missile to target
+        Rxy = np.linalg.norm(
+            [x_m - x_t, y_m - y_t]
+        )  # distance from missile to target project to X-Y plane
+        Rxyz = np.linalg.norm(
+            [x_m - x_t, y_m - y_t, z_t - z_m]
+        )  # distance from missile to target
         # calculate beta & eps, but no need actually...
         # beta = np.arctan2(y_m - y_t, x_m - x_t)  # relative yaw
         # eps = np.arctan2(z_m - z_t, np.linalg.norm([x_m - x_t, y_m - y_t]))  # relative pitch
-        dbeta = ((dy_t - dy_m) * (x_t - x_m) - (dx_t - dx_m) * (y_t - y_m)) / Rxy**2
-        deps = ((dz_t - dz_m) * Rxy**2 - (z_t - z_m) * (
-            (x_t - x_m) * (dx_t - dx_m) + (y_t - y_m) * (dy_t - dy_m))) / (Rxyz**2 * Rxy)
-        ny = self.K * v_m / self._g * np.cos(theta_m) * dbeta
+        d_beta = ((dy_t - dy_m) * (x_t - x_m) - (dx_t - dx_m) * (y_t - y_m)) / Rxy**2
+        deps = (
+            (dz_t - dz_m) * Rxy**2
+            - (z_t - z_m) * ((x_t - x_m) * (dx_t - dx_m) + (y_t - y_m) * (dy_t - dy_m))
+        ) / (Rxyz**2 * Rxy)
+        ny = self.K * v_m / self._g * np.cos(theta_m) * d_beta
         nz = self.K * v_m / self._g * deps + np.cos(theta_m)
         return np.clip([ny, nz], -self._nyz_max, self._nyz_max), Rxyz
 
@@ -507,7 +548,9 @@ class MissileSimulator(BaseSimulator):
         """
         # update position & geodetic
         self._position[:] += self.dt * self.get_velocity()
-        self._geodetic[:] = NEU2LLA(*self.get_position(), self.lon0, self.lat0, self.alt0)
+        self._geodetic[:] = NEU2LLA(
+            *self.get_position(), self.lon0, self.lat0, self.alt0
+        )
         # update velocity & posture
         v = np.linalg.norm(self.get_velocity())
         theta, phi = self.get_rpy()[1:]
@@ -517,17 +560,19 @@ class MissileSimulator(BaseSimulator):
         ny, nz = action
 
         dv = self._g * (nx - np.sin(theta))
-        self._dphi = self._g / v * (ny / np.cos(theta))
-        self._dtheta = self._g / v * (nz - np.cos(theta))
+        self._d_phi = self._g / v * (ny / np.cos(theta))
+        self._d_theta = self._g / v * (nz - np.cos(theta))
 
         v += self.dt * dv
-        phi += self.dt * self._dphi
-        theta += self.dt * self._dtheta
-        self._velocity[:] = np.array([
-            v * np.cos(theta) * np.cos(phi),
-            v * np.cos(theta) * np.sin(phi),
-            v * np.sin(theta)
-        ])
+        phi += self.dt * self._d_phi
+        theta += self.dt * self._d_theta
+        self._velocity[:] = np.array(
+            [
+                v * np.cos(theta) * np.cos(phi),
+                v * np.cos(theta) * np.sin(phi),
+                v * np.sin(theta),
+            ]
+        )
         self._posture[:] = np.array([0, theta, phi])
         # update mass
         if self._t < self._t_thrust:

@@ -1,3 +1,17 @@
+"""
+Author       : zzp@buaa.edu.cn
+Date         : 2024-11-11 16:07:45
+LastEditTime : 2024-11-11 16:51:03
+FilePath     : /LAG/envs/JSBSim/envs/single_control_env.py
+Description  : 
+"""
+"""
+Author       : zzp@buaa.edu.cn
+Date         : 2024-11-11 16:07:45
+LastEditTime : 2024-11-11 16:47:22
+FilePath     : /LAG/envs/JSBSim/envs/single_control_env.py
+Description  : 
+"""
 from .env_base import BaseEnv
 from ..tasks.heading_task import HeadingTask
 
@@ -13,11 +27,11 @@ class SingleControlEnv(BaseEnv):
         self.init_states = None
 
     def load_task(self):
-        taskname = getattr(self.config, 'task', None)
-        if taskname == 'heading':
+        task_name = getattr(self.config, 'task', None)
+        if task_name == 'heading':
             self.task = HeadingTask(self.config)
         else:
-            raise NotImplementedError(f'Unknown taskname: {taskname}')
+            raise NotImplementedError(f'Unknown task_name: {task_name}')
 
     def reset(self):
         self.current_step = 0

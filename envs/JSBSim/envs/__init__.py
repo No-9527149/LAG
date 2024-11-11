@@ -1,3 +1,3 @@
-from .singlecontrol_env import SingleControlEnv
-from .singlecombat_env import SingleCombatEnv
-from .multiplecombat_env import MultipleCombatEnv
+from .single_control_env import SingleControlEnv
+from .single_combat_env import SingleCombatEnv
+from .multiple_combat_env import MultipleCombatEnv

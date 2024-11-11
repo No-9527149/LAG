@@ -2,9 +2,9 @@ import numpy as np
 from gymnasium import spaces
 from collections import deque
 
-from .singlecombat_task import SingleCombatTask, HierarchicalSingleCombatTask
+from .single_combat_task import SingleCombatTask, HierarchicalSingleCombatTask
 from ..reward_functions import AltitudeReward, PostureReward, MissilePostureReward, EventDrivenReward, ShootPenaltyReward
-from ..core.simulatior import MissileSimulator
+from ..core.simulator import MissileSimulator
 from ..utils.utils import LLA2NEU, get_AO_TA_R
 
 
@@ -200,7 +200,7 @@ class SingleCombatShootMissileTask(SingleCombatDodgeMissileTask):
                 self.remaining_missiles[agent_id] -= 1
 
 
-class HierarchicalSingleCombatShootTask(HierarchicalSingleCombatTask, SingleCombatShootMissileTask):
+class HierarchicalSingleCombatShootMissileTask(HierarchicalSingleCombatTask, SingleCombatShootMissileTask):
     def __init__(self, config: str):
         HierarchicalSingleCombatTask.__init__(self, config)
         self.reward_functions = [

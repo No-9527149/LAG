@@ -89,12 +89,12 @@ class ACTLayer(nn.Module):
 
 
 class BaselineActor(nn.Module):
-    def __init__(self, input_dim=12, use_mlp_actlayer=False) -> None:
+    def __init__(self, input_dim=12, use_mlp_act_layer=False) -> None:
         super().__init__()
         self.tpdv = dict(dtype=torch.float32, device=torch.device('cpu'))
         self.base = MLPBase(input_dim, '128 128')
         self.rnn = GRULayer(128, 128, 1)
-        self.act = ACTLayer(128, [41, 41, 41, 30], use_mlp_actlayer)
+        self.act = ACTLayer(128, [41, 41, 41, 30], use_mlp_act_layer)
         self.to(torch.device('cpu'))
 
     def check(self, input):

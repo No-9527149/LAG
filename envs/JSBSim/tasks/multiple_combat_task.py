@@ -3,9 +3,9 @@ from gymnasium import spaces
 from typing import Tuple
 import torch
 
-from ..tasks import SingleCombatTask
+from . import SingleCombatTask
 from ..core.catalog import Catalog as c
-from ..core.simulatior import MissileSimulator
+from ..core.simulator import MissileSimulator
 from ..reward_functions import AltitudeReward, PostureReward, EventDrivenReward, MissilePostureReward
 from ..termination_conditions import ExtremeState, LowAltitude, Overload, Timeout, SafeReturn
 from ..utils.utils import get_AO_TA_R, LLA2NEU, get_root_dir

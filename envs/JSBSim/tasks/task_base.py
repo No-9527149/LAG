@@ -6,11 +6,15 @@ from ..core.catalog import Catalog as c
 
 
 class BaseTask(ABC):
-    """
-    Base Task class.
+    """Base Task class
+
     A class to subclass in order to create a task with its own observation variables,
-    action variables, termination conditions and reward functions.
+    action variables, termination conditions and reward functions
+
+    Args:
+        ABC (_type_): _description_
     """
+
     def __init__(self, config):
         self.config = config
         self.reward_functions = []
@@ -21,6 +25,7 @@ class BaseTask(ABC):
 
     @property
     def num_agents(self):
+        # TODO(zzp): multi-agents
         return 1
 
     @abstractmethod
@@ -61,7 +66,7 @@ class BaseTask(ABC):
             reward_function.reset(self, env)
 
     def step(self, env):
-        """ Task-specific step
+        """Task-specific step
 
         Args:
             env: environment instance
@@ -112,11 +117,9 @@ class BaseTask(ABC):
         return done, info
 
     def get_obs(self, env, agent_id):
-        """Extract useful informations from environment for specific agent_id.
-        """
+        """Extract useful information from environment for specific agent_id."""
         return np.zeros(2)
 
     def normalize_action(self, env, agent_id, action):
-        """Normalize action to be consistent with action space.
-        """
+        """Normalize action to be consistent with action space."""
         return np.array(action)

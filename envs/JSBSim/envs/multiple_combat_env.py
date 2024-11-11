@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Tuple, Dict, Any
 from .env_base import BaseEnv
-from ..tasks.multiplecombat_task import HierarchicalMultipleCombatShootTask, HierarchicalMultipleCombatTask, MultipleCombatTask
+from ..tasks.multiple_combat_task import HierarchicalMultipleCombatShootTask, HierarchicalMultipleCombatTask, MultipleCombatTask
 
 
 class MultipleCombatEnv(BaseEnv):
@@ -18,15 +18,15 @@ class MultipleCombatEnv(BaseEnv):
         return self.task.share_observation_space
 
     def load_task(self):
-        taskname = getattr(self.config, 'task', None)
-        if taskname == 'multiplecombat':
+        task_name = getattr(self.config, 'task', None)
+        if task_name == 'multiple_combat':
             self.task = MultipleCombatTask(self.config)
-        elif taskname == 'hierarchical_multiplecombat':
+        elif task_name == 'hierarchical_multiple_combat':
             self.task = HierarchicalMultipleCombatTask(self.config)
-        elif taskname == 'hierarchical_multiplecombat_shoot':
+        elif task_name == 'hierarchical_multiple_combat_shoot':
             self.task = HierarchicalMultipleCombatShootTask(self.config)
         else:
-            raise NotImplementedError(f"Unknown taskname: {taskname}")
+            raise NotImplementedError(f"Unknown task_name: {task_name}")
 
     def reset(self) -> Tuple[Dict[str, np.ndarray], Dict[str, np.ndarray]]:
         """Resets the state of the environment and returns an initial observation.

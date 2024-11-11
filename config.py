@@ -1,5 +1,7 @@
 import argparse
-from tokenize import group
+import colorlog
+import logging
+from logger import set_color
 
 
 def get_config():
@@ -10,7 +12,7 @@ def get_config():
     """
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter)
     parser = _get_prepare_config(parser)
-    parser = _get_replaybuffer_config(parser)
+    parser = _get_replay_buffer_config(parser)
     parser = _get_network_config(parser)
     parser = _get_recurrent_config(parser)
     parser = _get_optimizer_config(parser)
@@ -29,7 +31,7 @@ def _get_prepare_config(parser: argparse.ArgumentParser):
         --env-name <str>
             specify the name of environment
         --algorithm-name <str>
-            specifiy the algorithm, including `["ppo", "mappo"]`
+            specify the algorithm, including `["ppo", "mappo"]`
         --experiment-name <str>
             an identifier to distinguish different experiment.
         --seed <int>
@@ -54,34 +56,22 @@ def _get_prepare_config(parser: argparse.ArgumentParser):
             [for wandb usage], to specify user's name for simply collecting training data.
     """
     group = parser.add_argument_group("Prepare parameters")
-    group.add_argument("--env-name", type=str, default='JSBSim',
-                       help="specify the name of environment")
-    group.add_argument("--algorithm-name", type=str, default='ppo', choices=["ppo", "mappo"],
-                       help="Specifiy the algorithm (default ppo)")
-    group.add_argument("--experiment-name", type=str, default="check",
-                       help="An identifier to distinguish different experiment.")
-    group.add_argument("--seed", type=int, default=1,
-                       help="Random seed for numpy/torch")
-    group.add_argument("--cuda", action='store_true', default=False,
-                       help="By default False, will use CPU to train; or else will use GPU;")
-    group.add_argument("--n-training-threads", type=int, default=1,
-                       help="Number of torch threads for training (default 1)")
-    group.add_argument("--n-rollout-threads", type=int, default=4,
-                       help="Number of parallel envs for training/evaluating rollout (default 4)")
-    group.add_argument("--num-env-steps", type=float, default=1e7,
-                       help='Number of environment steps to train (default: 1e7)')
-    group.add_argument("--model-dir", type=str, default=None,
-                       help="By default None. set the path to pretrained model.")
-    group.add_argument("--use-wandb", action='store_true', default=False,
-                       help="[for wandb usage], by default False, if set, will log date to wandb server.")
-    group.add_argument("--user-name", type=str, default='liuqh',
-                       help="for setprobtitle use")
-    group.add_argument("--wandb-name", type=str, default='liuqh',
-                       help="[for wandb usage], to specify user's name for simply collecting training data.")
+    group.add_argument("--env-name", type=str, default='JSBSim', help="specify the name of environment")
+    group.add_argument("--algorithm-name", type=str, default='ppo', choices=["ppo", "mappo"], help="Specify the algorithm (default ppo)")
+    group.add_argument("--experiment-name", type=str, default="check", help="An identifier to distinguish different experiment.")
+    group.add_argument("--seed", type=int, default=1, help="Random seed for numpy/torch")
+    group.add_argument("--cuda", action='store_true', default=False, help="By default False, will use CPU to train; or else will use GPU;")
+    group.add_argument("--n-training-threads", type=int, default=1, help="Number of torch threads for training (default 1)")
+    group.add_argument("--n-rollout-threads", type=int, default=4, help="Number of parallel envs for training/evaluating rollout (default 4)")
+    group.add_argument("--num-env-steps", type=float, default=1e7, help='Number of environment steps to train (default: 1e7)')
+    group.add_argument("--model-dir", type=str, default=None, help="By default None. set the path to pretrained model.")
+    group.add_argument("--use-wandb", action='store_true', default=False, help="[for wandb usage], by default False, if set, will log date to wandb server.")
+    group.add_argument("--user-name", type=str, default='zzp', help="for set proc title use")
+    group.add_argument("--wandb-name", type=str, default='zzp', help="[for wandb usage], to specify user's name for simply collecting training data.")
     return parser
 
 
-def _get_replaybuffer_config(parser: argparse.ArgumentParser):
+def _get_replay_buffer_config(parser: argparse.ArgumentParser):
     """
     Replay Buffer parameters:
         --gamma <float>
@@ -96,16 +86,11 @@ def _get_replaybuffer_config(parser: argparse.ArgumentParser):
             gae lambda parameter (default: 0.95)
     """
     group = parser.add_argument_group("Replay Buffer parameters")
-    group.add_argument("--gamma", type=float, default=0.99,
-                       help='discount factor for rewards (default: 0.99)')
-    group.add_argument("--buffer-size", type=int, default=200,
-                       help="maximum storage in the buffer.")
-    group.add_argument("--use-proper-time-limits", action='store_true', default=False,
-                       help='compute returns taking into account time limits')
-    group.add_argument("--use-gae", action='store_false', default=True,
-                       help='Whether to use generalized advantage estimation')
-    group.add_argument("--gae-lambda", type=float, default=0.95,
-                       help='gae lambda parameter (default: 0.95)')
+    group.add_argument("--gamma", type=float, default=0.99, help='discount factor for rewards (default: 0.99)')
+    group.add_argument("--buffer-size", type=int, default=200, help="maximum storage in the buffer.")
+    group.add_argument("--use-proper-time-limits", action='store_true', default=False, help='compute returns taking into account time limits')
+    group.add_argument("--use-gae", action='store_false', default=True, help='Whether to use generalized advantage estimation')
+    group.add_argument("--gae-lambda", type=float, default=0.95, help='gae lambda parameter (default: 0.95)')
     return parser
 
 
@@ -115,7 +100,7 @@ def _get_network_config(parser: argparse.ArgumentParser):
         --hidden-size <str>
             dimension of hidden layers for mlp pre-process networks
         --act-hidden-size <int>
-            dimension of hidden layers for actlayer
+            dimension of hidden layers for act layer
         --activation-id
             choose 0 to use Tanh, 1 to use ReLU, 2 to use LeakyReLU, 3 to use ELU
         --use-feature-normalization
@@ -124,18 +109,12 @@ def _get_network_config(parser: argparse.ArgumentParser):
             by default 0.01, use the gain # of last action layer
     """
     group = parser.add_argument_group("Network parameters")
-    group.add_argument("--hidden-size", type=str, default='128 128',
-                       help="Dimension of hidden layers for mlp pre-process networks (default '128 128')")
-    group.add_argument("--act-hidden-size", type=str, default='128 128',
-                       help="Dimension of hidden layers for actlayer (default '128 128')")
-    group.add_argument("--activation-id", type=int, default=1,
-                       help="Choose 0 to use Tanh, 1 to use ReLU, 2 to use LeakyReLU, 3 to use ELU (default 1)")
-    group.add_argument("--use-feature-normalization", action='store_true', default=False,
-                       help="Whether to apply LayerNorm to the feature extraction inputs")
-    group.add_argument("--gain", type=float, default=0.01,
-                       help="The gain # of last action layer")
-    group.add_argument("--use-prior", action='store_true', default=False,
-                       help="Whether to use prior hunman info to update network, use only on missile shoot task")
+    group.add_argument("--hidden-size", type=str, default='128 128', help="Dimension of hidden layers for mlp pre-process networks (default '128 128')")
+    group.add_argument("--act-hidden-size", type=str, default='128 128', help="Dimension of hidden layers for act layer (default '128 128')")
+    group.add_argument("--activation-id", type=int, default=1, help="Choose 0 to use Tanh, 1 to use ReLU, 2 to use LeakyReLU, 3 to use ELU (default 1)")
+    group.add_argument("--use-feature-normalization", action='store_true', default=False, help="Whether to apply LayerNorm to the feature extraction inputs")
+    group.add_argument("--gain", type=float, default=0.01, help="The gain # of last action layer")
+    group.add_argument("--use-prior", action='store_true', default=False, help="Whether to use prior human info to update network, use only on missile shoot task")
     return parser
 
 
@@ -152,14 +131,10 @@ def _get_recurrent_config(parser: argparse.ArgumentParser):
             Time length of chunks used to train a recurrent_policy, default 10.
     """
     group = parser.add_argument_group("Recurrent parameters")
-    group.add_argument("--use-recurrent-policy", action='store_false', default=True,
-                       help='Whether to use a recurrent policy')
-    group.add_argument("--recurrent-hidden-size", type=int, default=128,
-                       help="Dimension of hidden layers for recurrent layers (default 128)")
-    group.add_argument("--recurrent-hidden-layers", type=int, default=1,
-                       help="The number of recurrent layers (default 1)")
-    group.add_argument("--data-chunk-length", type=int, default=10,
-                       help="Time length of chunks used to train a recurrent_policy (default 10)")
+    group.add_argument("--use-recurrent-policy", action='store_false', default=True, help='Whether to use a recurrent policy')
+    group.add_argument("--recurrent-hidden-size", type=int, default=128, help="Dimension of hidden layers for recurrent layers (default 128)")
+    group.add_argument("--recurrent-hidden-layers", type=int, default=1, help="The number of recurrent layers (default 1)")
+    group.add_argument("--data-chunk-length", type=int, default=10, help="Time length of chunks used to train a recurrent_policy (default 10)")
     return parser
 
 
@@ -170,8 +145,7 @@ def _get_optimizer_config(parser: argparse.ArgumentParser):
             learning rate parameter (default: 5e-4, fixed).
     """
     group = parser.add_argument_group("Optimizer parameters")
-    group.add_argument("--lr", type=float, default=5e-4,
-                       help='learning rate (default: 5e-4)')
+    group.add_argument("--lr", type=float, default=5e-4, help='learning rate (default: 5e-4)')
     return parser
 
 
@@ -196,22 +170,14 @@ def _get_ppo_config(parser: argparse.ArgumentParser):
             max norm of gradients (default: 0.5)
     """
     group = parser.add_argument_group("PPO parameters")
-    group.add_argument("--ppo-epoch", type=int, default=10,
-                       help='number of ppo epochs (default: 10)')
-    group.add_argument("--clip-param", type=float, default=0.2,
-                       help='ppo clip parameter (default: 0.2)')
-    group.add_argument("--use-clipped-value-loss", action='store_true', default=False,
-                       help="By default false. If set, clip value loss.")
-    group.add_argument("--num-mini-batch", type=int, default=1,
-                       help='number of batches for ppo (default: 1)')
-    group.add_argument("--value-loss-coef", type=float, default=1,
-                       help='ppo value loss coefficient (default: 1)')
-    group.add_argument("--entropy-coef", type=float, default=0.01,
-                       help='entropy term coefficient (default: 0.01)')
-    group.add_argument("--use-max-grad-norm", action='store_false', default=True,
-                       help="By default, use max norm of gradients. If set, do not use.")
-    group.add_argument("--max-grad-norm", type=float, default=2,
-                       help='max norm of gradients (default: 2)')
+    group.add_argument("--ppo-epoch", type=int, default=10, help='number of ppo epochs (default: 10)')
+    group.add_argument("--clip-param", type=float, default=0.2, help='ppo clip parameter (default: 0.2)')
+    group.add_argument("--use-clipped-value-loss", action='store_true', default=False, help="By default false. If set, clip value loss.")
+    group.add_argument("--num-mini-batch", type=int, default=1, help='number of batches for ppo (default: 1)')
+    group.add_argument("--value-loss-coef", type=float, default=1, help='ppo value loss coefficient (default: 1)')
+    group.add_argument("--entropy-coef", type=float, default=0.01, help='entropy term coefficient (default: 0.01)')
+    group.add_argument("--use-max-grad-norm", action='store_false', default=True, help="By default, use max norm of gradients. If set, do not use.")
+    group.add_argument("--max-grad-norm", type=float, default=2, help='max norm of gradients (default: 2)')
     return parser
 
 
@@ -221,21 +187,17 @@ def _get_selfplay_config(parser: argparse.ArgumentParser):
         --use-selfplay
             by default false. If set, use selfplay algorithms.
         --selfplay-algorithm <str>
-            specifiy the selfplay algorithm, including `["sp", "fsp"]`
+            specify the selfplay algorithm, including `["sp", "fsp"]`
         --n-choose-opponents <int>
             number of different opponents chosen for rollout. (default 1)
         --init-elo <float>
             initial ELO for policy performance. (default 1000.0)
     """
     group = parser.add_argument_group("Selfplay parameters")
-    group.add_argument("--use-selfplay", action='store_true', default=False,
-                       help="By default false. If set, use selfplay algorithms.")
-    group.add_argument("--selfplay-algorithm", type=str, default='sp', choices=["sp", "fsp", "pfsp"],
-                       help="Specifiy the selfplay algorithm (default 'sp')")
-    group.add_argument('--n-choose-opponents', type=int, default=1,
-                       help="number of different opponents chosen for rollout. (default 1)")
-    group.add_argument('--init-elo', type=float, default=1000.0,
-                       help="initial ELO for policy performance. (default 1000.0)")
+    group.add_argument("--use-selfplay", action='store_true', default=False, help="By default false. If set, use selfplay algorithms.")
+    group.add_argument("--selfplay-algorithm", type=str, default='sp', choices=["sp", "fsp", "pfsp"], help="Specify the selfplay algorithm (default 'sp')")
+    group.add_argument('--n-choose-opponents', type=int, default=1, help="number of different opponents chosen for rollout. (default 1)")
+    group.add_argument('--init-elo', type=float, default=1000.0, help="initial ELO for policy performance. (default 1000.0)")
     return parser
 
 
@@ -243,11 +205,10 @@ def _get_save_config(parser: argparse.ArgumentParser):
     """
     Save parameters:
         --save-interval <int>
-            time duration between contiunous twice models saving.
+            time duration between continuous twice models saving.
     """
     group = parser.add_argument_group("Save parameters")
-    group.add_argument("--save-interval", type=int, default=1,
-                       help="time duration between contiunous twice models saving. (default 1)")
+    group.add_argument("--save-interval", type=int, default=1, help="time duration between continuous twice models saving. (default 1)")
     return parser
 
 
@@ -255,11 +216,10 @@ def _get_log_config(parser: argparse.ArgumentParser):
     """
     Log parameters:
         --log-interval <int>
-            time duration between contiunous twice log printing.
+            time duration between continuous twice log printing.
     """
     group = parser.add_argument_group("Log parameters")
-    group.add_argument("--log-interval", type=int, default=5,
-                       help="time duration between contiunous twice log printing. (default 5)")
+    group.add_argument("--log-interval", type=int, default=5, help="time duration between continuous twice log printing. (default 5)")
     return parser
 
 
@@ -271,19 +231,15 @@ def _get_eval_config(parser: argparse.ArgumentParser):
         --n-eval-rollout-threads <int>
             number of parallel envs for evaluating rollout. by default 1
         --eval-interval <int>
-            time duration between contiunous twice evaluation progress.
+            time duration between continuous twice evaluation progress.
         --eval-episodes <int>
             number of episodes of a single evaluation.
     """
     group = parser.add_argument_group("Eval parameters")
-    group.add_argument("--use-eval", action='store_true', default=False,
-                       help="by default, do not start evaluation. If set, start evaluation alongside with training.")
-    group.add_argument("--n-eval-rollout-threads", type=int, default=1,
-                       help="Number of parallel envs for evaluating rollout (default 1)")
-    group.add_argument("--eval-interval", type=int, default=25,
-                       help="time duration between contiunous twice evaluation progress. (default 25)")
-    group.add_argument("--eval-episodes", type=int, default=32,
-                       help="number of episodes of a single evaluation. (default 32)")
+    group.add_argument("--use-eval", action='store_true', default=False, help="by default, do not start evaluation. If set, start evaluation alongside with training.")
+    group.add_argument("--n-eval-rollout-threads", type=int, default=1, help="Number of parallel envs for evaluating rollout (default 1)")
+    group.add_argument("--eval-interval", type=int, default=25, help="time duration between continuous twice evaluation progress. (default 25)")
+    group.add_argument("--eval-episodes", type=int, default=32, help="number of episodes of a single evaluation. (default 32)")
     return parser
 
 def _get_render_config(parser: argparse.ArgumentParser):
@@ -300,6 +256,48 @@ def _get_render_config(parser: argparse.ArgumentParser):
     return parser
 
 
+def parser_to_dict(parser: argparse.ArgumentParser):
+    config_dict = dict()
+    for group in parser._action_groups:
+        group_dict = dict()
+        for action in group._group_actions:
+            if action.dest != 'help':
+                group_dict[action.dest] = action.default
+        config_dict[group.title] = group_dict
+    return config_dict
+
+
+def parser_dict_to_color_string(config_dict):
+    info = '\n'
+    for group_name, params in config_dict.items():
+        info += set_color(group_name + ':\n', 'pink')
+        for param_name, param_value in params.items():
+            info += '    '
+            info += set_color(param_name, 'cyan')
+            info += ' = '
+            info += set_color(str(param_value), 'yellow')
+            info += '\n'
+        info += '\n'
+    return info
+
 if __name__ == "__main__":
+    log_colors_config = {
+        "DEBUG": "cyan",
+        "WARNING": "yellow",
+        "ERROR": "red",
+        "CRITICAL": "red",
+    }
+    sh = logging.StreamHandler()
+    sh.setLevel(logging.INFO)
+    str_fmt = "%(log_color)s%(asctime)-15s %(levelname)s %(message)s"
+    str_date_fmt = "%d %b %H:%M"
+    str_formatter = colorlog.ColoredFormatter(str_fmt, str_date_fmt, log_colors=log_colors_config)
+    sh.setFormatter(str_formatter)
+    logging.basicConfig(level=logging.INFO)
+
     parser = get_config()
+    config_dict = parser_to_dict(parser)
+    config_info = parser_dict_to_color_string(config_dict)
+    logger = logging.getLogger()
+    logger.info(config_info)
     all_args = parser.parse_args()
