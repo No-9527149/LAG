@@ -7,8 +7,11 @@ import logging
 import numpy as np
 from pathlib import Path
 import setproctitle
+
 # Deal with import error
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
+sys.path.append(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+)
 from config import get_config
 from runner.share_jsbsim_runner import ShareJSBSimRunner
 from envs.JSBSim.envs import SingleCombatEnv, SingleControlEnv, MultipleCombatEnv
@@ -25,11 +28,15 @@ def make_render_env(all_args):
             elif all_args.env_name == "MultipleCombat":
                 env = MultipleCombatEnv(all_args.scenario_name)
             else:
-                logging.error("Can not support the " + all_args.env_name + "environment.")
+                logging.error(
+                    "Can not support the " + all_args.env_name + "environment."
+                )
                 raise NotImplementedError
             env.seed(all_args.seed + rank * 1000)
             return env
+
         return init_env
+
     if all_args.env_name == "MultipleCombat":
         return ShareDummyVecEnv([get_env_fn(0)])
     else:
@@ -38,12 +45,21 @@ def make_render_env(all_args):
 
 def parse_args(args, parser):
     group = parser.add_argument_group("JSBSim Env parameters")
-    group.add_argument('--episode-length', type=int, default=1000,
-                       help="the max length of an episode")
-    group.add_argument('--scenario-name', type=str, default='singlecombat_vsbaseline',
-                       help="number of fighters controlled by RL policy")
-    group.add_argument('--num-agents', type=int, default=1,
-                       help="number of fighters controlled by RL policy")
+    group.add_argument(
+        "--episode-length", type=int, default=1000, help="the max length of an episode"
+    )
+    group.add_argument(
+        "--scenario-name",
+        type=str,
+        default="single_combat_vs_baseline",
+        help="number of fighters controlled by RL policy",
+    )
+    group.add_argument(
+        "--num-agents",
+        type=int,
+        default=1,
+        help="number of fighters controlled by RL policy",
+    )
     all_args = parser.parse_known_args(args)[0]
     return all_args
 
@@ -61,7 +77,7 @@ def main(args):
     # cuda
     if all_args.cuda and torch.cuda.is_available():
         logging.info("choose to use gpu...")
-        device = torch.device("cuda:0")  # use cude mask to control using which GPU
+        device = torch.device("cuda:0")  # use cuda mask to control using which GPU
         torch.set_num_threads(all_args.n_training_threads)
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = True
@@ -71,17 +87,29 @@ def main(args):
         torch.set_num_threads(all_args.n_training_threads)
 
     # run dir
-    run_dir = Path(os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/results") \
-        / all_args.env_name / all_args.scenario_name / all_args.algorithm_name / all_args.experiment_name
+    run_dir = (
+        Path(os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/results")
+        / all_args.env_name
+        / all_args.scenario_name
+        / all_args.algorithm_name
+        / all_args.experiment_name
+    )
     if not run_dir.exists():
         os.makedirs(str(run_dir))
-    curr_run = 'render'
+    curr_run = "render"
     run_dir = run_dir / curr_run
     if not run_dir.exists():
         os.makedirs(str(run_dir))
 
-    setproctitle.setproctitle(str(all_args.algorithm_name) + "-" + str(all_args.env_name)
-                              + "-" + str(all_args.experiment_name) + "@" + str(all_args.user_name))
+    setproctitle.setproctitle(
+        str(all_args.algorithm_name)
+        + "-"
+        + str(all_args.env_name)
+        + "-"
+        + str(all_args.experiment_name)
+        + "@"
+        + str(all_args.user_name)
+    )
 
     # env init
     envs = make_render_env(all_args)
@@ -93,7 +121,7 @@ def main(args):
         "envs": envs,
         "num_agents": num_agents,
         "device": device,
-        "run_dir": run_dir
+        "run_dir": run_dir,
     }
 
     # run experiments

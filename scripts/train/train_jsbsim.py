@@ -1,3 +1,11 @@
+"""
+Author       : zzp@buaa.edu.cn
+Date         : 2024-11-11 20:47:48
+LastEditTime : 2024-11-12 17:22:37
+FilePath     : /LAG/scripts/train/train_jsbsim.py
+Description  : 
+"""
+
 #!/usr/bin/env python
 import sys
 import os
