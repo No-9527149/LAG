@@ -228,6 +228,7 @@ def _get_log_config(parser: argparse.ArgumentParser):
     """
     group = parser.add_argument_group("Log parameters")
     group.add_argument("--log-interval", type=int, default=5, help="time duration between continuous twice log printing. (default 5)")
+    group.add_argument("--log_state", type=str, default="INFO", help="Set log state")
     return parser
 
 

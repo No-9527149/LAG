@@ -51,7 +51,7 @@ class MultipleCombatEnv(BaseEnv):
         # Assign new initial condition here!
         for sim in self._jsbsims.values():
             sim.reload()
-        self._tempsims.clear()
+        self._temp_sims.clear()
 
     def step(
         self, action: np.ndarray
@@ -84,7 +84,7 @@ class MultipleCombatEnv(BaseEnv):
         for _ in range(self.agent_interaction_steps):
             for sim in self._jsbsims.values():
                 sim.run()
-            for sim in self._tempsims.values():
+            for sim in self._temp_sims.values():
                 sim.run()
         self.task.step(self)
         obs = self.get_obs()

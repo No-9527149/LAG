@@ -1,5 +1,5 @@
 # task config
-task: hierarchical_singlecombat_shoot
+task: hierarchical_single_combat_shoot
 
 # simulation config
 sim_freq: 60
@@ -13,6 +13,8 @@ acceleration_limit_y: 10.0
 acceleration_limit_z: 10.0
 
 # aircraft config
+use_baseline: true
+baseline_type: maneuver
 aircraft_configs: {
   A0100: {
     color: Red,
@@ -36,9 +38,10 @@ aircraft_configs: {
       ic_psi_true_deg: 180.0,
       ic_u_fps: 800.0,
     },
-    missile: 2,
+    missile: 0,
   }
 }
+
 # (lontitude, latitude, altitude)
 battle_field_center: [120.0, 60.0, 0.0]
 

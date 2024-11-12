@@ -99,10 +99,10 @@ class VecEnv(ABC):
         """
         Wait for the step taken with step_async().
 
-        Returns (obs, rews, dones, infos):
+        Returns (obs, rewards, dones, infos):
             - obs: an array of observations, or a dict of
                 arrays of observations.
-            - rews: an array of rewards
+            - rewards: an array of rewards
             - dones: an array of "episode done" booleans
             - infos: a sequence of info objects
         """
@@ -259,7 +259,7 @@ class SubprocVecEnv(VecEnv):
     def __init__(self, env_fns, context="spawn", in_series=1):
         """
         Args:
-            env_fns: iterable of callables - functions that create environments to run in subprocesses. Need to be cloud-pickleable
+            env_fns: iterable of callables - functions that create environments to run in subprocesses. Need to be cloud-pickle able
             context (str, optional): Defaults to 'spawn'.
             in_series (int, optional): number of environments to run in series in a single process. Defaults to 1.
                 (e.g. when len(env_fns) == 12 and in_series == 3, it will run 4 processes, each running 3 envs in series)
@@ -267,11 +267,11 @@ class SubprocVecEnv(VecEnv):
         self.waiting = False
         self.closed = False
         self.in_series = in_series
-        nenvs = len(env_fns)
+        n_envs = len(env_fns)
         assert (
-            nenvs % in_series == 0
+            n_envs % in_series == 0
         ), "Number of envs must be divisible by number of envs to run in series"
-        self.n_remotes = nenvs // in_series
+        self.n_remotes = n_envs // in_series
         env_fns = np.array_split(env_fns, self.n_remotes)
         # create Pipe connections to send/recv data from subprocesses,
         self.remotes, self.work_remotes = zip(*[Pipe() for _ in range(self.n_remotes)])
@@ -294,7 +294,7 @@ class SubprocVecEnv(VecEnv):
 
         self.remotes[0].send(("get_spaces", None))
         observation_space, action_space = self.remotes[0].recv().x
-        super().__init__(nenvs, observation_space, action_space)
+        super().__init__(n_envs, observation_space, action_space)
 
         self.remotes[0].send(("get_num_agents", None))
         self.num_agents = self.remotes[0].recv().x
@@ -311,7 +311,7 @@ class SubprocVecEnv(VecEnv):
         results = [remote.recv() for remote in self.remotes]
         results = self._flatten_series(
             results
-        )  # [[tuple] * in_series] * n_remotes => [tuple] * nenvs
+        )  # [[tuple] * in_series] * n_remotes => [tuple] * n_envs
         self.waiting = False
         observation, rewards, dones, infos = zip(*results)
         return (
@@ -398,7 +398,7 @@ class ShareDummyVecEnv(DummyVecEnv, ShareVecEnv):
 
     def step_wait(self):
         results = [env.step(a) for (a, env) in zip(self.actions, self.envs)]
-        obs, share_obs, rews, dones, infos = map(list, zip(*results))
+        obs, share_obs, rewards, dones, infos = map(list, zip(*results))
         for i, done in enumerate(dones):
             if "bool" in done.__class__.__name__:
                 if done:
@@ -415,7 +415,7 @@ class ShareDummyVecEnv(DummyVecEnv, ShareVecEnv):
         return (
             self._flatten(obs),
             self._flatten(share_obs),
-            self._flatten(rews),
+            self._flatten(rewards),
             self._flatten(dones),
             np.array(infos),
         )
@@ -489,11 +489,11 @@ class ShareSubprocVecEnv(SubprocVecEnv, ShareVecEnv):
         self.waiting = False
         self.closed = False
         self.in_series = in_series
-        nenvs = len(env_fns)
+        n_envs = len(env_fns)
         assert (
-            nenvs % in_series == 0
+            n_envs % in_series == 0
         ), "Number of envs must be divisible by number of envs to run in series"
-        self.n_remotes = nenvs // in_series
+        self.n_remotes = n_envs // in_series
         env_fns = np.array_split(env_fns, self.n_remotes)
         # create Pipe connections to send/recv data from subprocesses,
         self.remotes, self.work_remotes = zip(*[Pipe() for _ in range(self.n_remotes)])
@@ -520,7 +520,7 @@ class ShareSubprocVecEnv(SubprocVecEnv, ShareVecEnv):
             self.remotes[0].recv().x
         )
         ShareVecEnv.__init__(
-            self, nenvs, observation_space, share_observation_space, action_space
+            self, n_envs, observation_space, share_observation_space, action_space
         )
 
         self.remotes[0].send(("get_num_agents", None))
@@ -531,7 +531,7 @@ class ShareSubprocVecEnv(SubprocVecEnv, ShareVecEnv):
         results = [remote.recv() for remote in self.remotes]
         results = self._flatten_series(
             results
-        )  # [[tuple] * in_series] * n_remotes => [tuple] * nenvs
+        )  # [[tuple] * in_series] * n_remotes => [tuple] * n_envs
         self.waiting = False
         obs, share_obs, rewards, dones, infos = zip(*results)
         return (

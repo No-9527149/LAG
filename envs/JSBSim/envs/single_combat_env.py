@@ -33,17 +33,17 @@ class SingleCombatEnv(BaseEnv):
 
     def load_task(self):
         task_name = getattr(self.config, "task", None)
-        if task_name == "singlecombat":
+        if task_name == "single_combat":
             self.task = SingleCombatTask(self.config)
-        elif task_name == "hierarchical_singlecombat":
+        elif task_name == "hierarchical_single_combat":
             self.task = HierarchicalSingleCombatTask(self.config)
-        elif task_name == "singlecombat_dodge_missile":
+        elif task_name == "single_combat_dodge_missile":
             self.task = SingleCombatDodgeMissileTask(self.config)
-        elif task_name == "singlecombat_shoot":
+        elif task_name == "single_combat_shoot":
             self.task = SingleCombatShootMissileTask(self.config)
-        elif task_name == "hierarchical_singlecombat_dodge_missile":
+        elif task_name == "hierarchical_single_combat_dodge_missile":
             self.task = HierarchicalSingleCombatDodgeMissileTask(self.config)
-        elif task_name == "hierarchical_singlecombat_shoot":
+        elif task_name == "hierarchical_single_combat_shoot":
             self.task = HierarchicalSingleCombatShootMissileTask(self.config)
         else:
             raise NotImplementedError(f"Unknown task_name: {task_name}")
@@ -68,4 +68,4 @@ class SingleCombatEnv(BaseEnv):
         self.np_random.shuffle(init_states)
         for idx, sim in enumerate(self.agents.values()):
             sim.reload(init_states[idx])
-        self._tempsims.clear()
+        self._temp_sims.clear()

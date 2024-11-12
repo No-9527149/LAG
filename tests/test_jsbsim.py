@@ -500,7 +500,7 @@ class TestMultipleCombatEnv:
                 if env.current_step > 40:
                     assert dones[enemy1_id] == True and rewards[enemy1_id] == 0.0
             if np.all(list(dones.values())):
-                assert not env._tempsims["C0000"].is_alive
+                assert not env._temp_sims["C0000"].is_alive
                 break
 
     @pytest.mark.parametrize(

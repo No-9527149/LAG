@@ -157,7 +157,7 @@ def parse_args(args, parser):
     group.add_argument(
         "--scenario-name",
         type=str,
-        default="singlecombat_simple",
+        default="single_combat_simple",
         help="Which scenario to run on",
     )
     all_args = parser.parse_known_args(args)[0]
@@ -222,9 +222,9 @@ def main(args):
             curr_run = "run_1"
         else:
             exist_run_nums = [
-                int(str(folder.name).split("run")[1])
+                int(str(folder.name).split("run_")[1])
                 for folder in run_dir.iterdir()
-                if str(folder.name).startswith("run")
+                if str(folder.name).startswith("run_")
             ]
             if len(exist_run_nums) == 0:
                 curr_run = "run_1"

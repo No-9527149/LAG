@@ -1,16 +1,18 @@
-"""
+'''
 Author       : zzp@buaa.edu.cn
-Date         : 2024-11-11 16:17:14
-LastEditTime : 2024-11-11 16:17:58
+Date         : 2024-11-11 20:47:48
+LastEditTime : 2024-11-11 21:31:14
 FilePath     : /LAG/logger/__init__.py
-Description  : 
-"""
+Description  : No more description
+'''
+
 import logging
 import os
 import colorlog
 import re
 from colorama import init
-from .utils import get_local_time, ensure_dir
+from logger.utils import get_local_time, ensure_dir
+from pathlib import Path
 
 log_colors_config = {
     "DEBUG": "cyan",
@@ -43,7 +45,7 @@ def set_color(log, color, highlight=True):
     return prev_log + log + "\033[0m"
 
 
-def init_logger(config):
+def init_logger(all_args):
     """A logger that can show a message on standard output and write it into the file
     named `filename` simultaneously. All the message that you want to log MUST be str
 
@@ -59,30 +61,30 @@ def init_logger(config):
     LOGROOT = "./log/"
     dir_name = os.path.dirname(LOGROOT)
     ensure_dir(dir_name)
-    model_name = os.path.join(dir_name, config["model"])
-    ensure_dir(model_name)
-    log_file_name = "{}/{}.log".format(config["model"], get_local_time())
-    log_file_path = os.path.join(LOGROOT, log_file_name)
+    log_dir_name = (Path(dir_name) / all_args.env_name / all_args.scenario_name / all_args.algorithm_name / all_args.experiment_name)
+    ensure_dir(log_dir_name)
+    log_file_name = "{}.log".format(get_local_time())
+    log_file_path = os.path.join(log_dir_name, log_file_name)
 
     file_fmt = "%(asctime)-15s %(levelname)s  %(message)s"
     file_date_fmt = "%a %d %b %Y %H:%M:%S"
     file_formatter = logging.Formatter(file_fmt, file_date_fmt)
 
-    s_fmt = "%(log_color)s%(asctime)-15s %(levelname)s %(message)s"
-    s_date_fmt = "%d %b %H:%M"
-    s_formatter = colorlog.ColoredFormatter(
-        s_fmt, s_date_fmt, log_colors=log_colors_config
+    str_fmt = "%(log_color)s%(asctime)-15s %(levelname)s %(message)s"
+    str_date_fmt = "%d %b %H:%M"
+    str_formatter = colorlog.ColoredFormatter(
+        str_fmt, str_date_fmt, log_colors=log_colors_config
     )
 
-    if config["state"] is None or config["state"].lower() == "info":
+    if all_args.log_state is None or all_args.log_state.lower() == "info":
         level = logging.INFO
-    elif config["state"].lower() == "debug":
+    elif all_args.log_state.lower() == "debug":
         level = logging.DEBUG
-    elif config["state"].lower() == "error":
+    elif all_args.log_state.lower() == "error":
         level = logging.ERROR
-    elif config["state"].lower() == "warning":
+    elif all_args.log_state.lower() == "warning":
         level = logging.WARNING
-    elif config["state"].lower() == "critical":
+    elif all_args.log_state.lower() == "critical":
         level = logging.CRITICAL
     else:
         level = logging.INFO
@@ -95,6 +97,6 @@ def init_logger(config):
 
     sh = logging.StreamHandler()
     sh.setLevel(level)
-    sh.setFormatter(s_formatter)
+    sh.setFormatter(str_formatter)
 
     logging.basicConfig(level=level, handlers=[sh, fh])

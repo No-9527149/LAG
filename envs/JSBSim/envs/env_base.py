@@ -93,10 +93,10 @@ class BaseEnv(gymnasium.Env):
                 else:
                     sim.enemies.append(s)
 
-        self._tempsims = {}  # type: Dict[str, BaseSimulator]
+        self._temp_sims = {}  # type: Dict[str, BaseSimulator]
 
     def add_temp_simulator(self, sim: BaseSimulator):
-        self._tempsims[sim.uid] = sim
+        self._temp_sims[sim.uid] = sim
 
     def reset(self) -> np.ndarray:
         """Resets the state of the environment and returns an initial observation.
@@ -108,7 +108,7 @@ class BaseEnv(gymnasium.Env):
         self.current_step = 0
         for sim in self._jsbsims.values():
             sim.reload()
-        self._tempsims.clear()
+        self._temp_sims.clear()
         # reset task
         self.task.reset(self)
         obs = self.get_obs()
@@ -146,7 +146,7 @@ class BaseEnv(gymnasium.Env):
         for _ in range(self.agent_interaction_steps):
             for sim in self._jsbsims.values():
                 sim.run()
-            for sim in self._tempsims.values():
+            for sim in self._temp_sims.values():
                 sim.run()
         self.task.step(self)
 
@@ -194,10 +194,10 @@ class BaseEnv(gymnasium.Env):
         """
         for sim in self._jsbsims.values():
             sim.close()
-        for sim in self._tempsims.values():
+        for sim in self._temp_sims.values():
             sim.close()
         self._jsbsims.clear()
-        self._tempsims.clear()
+        self._temp_sims.clear()
 
     def render(self, mode="txt", filepath="./JSBSimRecording.txt.acmi"):
         """Renders the environment.
@@ -233,7 +233,7 @@ class BaseEnv(gymnasium.Env):
                     log_msg = sim.log()
                     if log_msg is not None:
                         f.write(log_msg + "\n")
-                for sim in self._tempsims.values():
+                for sim in self._temp_sims.values():
                     log_msg = sim.log()
                     if log_msg is not None:
                         f.write(log_msg + "\n")

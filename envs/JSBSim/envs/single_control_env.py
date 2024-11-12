@@ -51,4 +51,4 @@ class SingleControlEnv(BaseEnv):
             })
         for idx, sim in enumerate(self.agents.values()):
             sim.reload(self.init_states[idx])
-        self._tempsims.clear()
+        self._temp_sims.clear()
