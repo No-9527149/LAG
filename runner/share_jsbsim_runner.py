@@ -1,7 +1,7 @@
 """
 Author       : zzp@buaa.edu.cn
 Date         : 2024-11-11 20:47:48
-LastEditTime : 2024-11-12 17:22:21
+LastEditTime : 2024-11-12 17:28:56
 FilePath     : /LAG/runner/share_jsbsim_runner.py
 Description  : 
 """
@@ -105,7 +105,7 @@ class ShareJSBSimRunner(Runner):
                 )
 
             logging.info(
-                "\n Load selfplay opponents: Algo {}, num_opponents {}.\n".format(
+                "\nLoad selfplay opponents: Algo {}, num_opponents {}.\n".format(
                     self.all_args.selfplay_algorithm, self.all_args.n_choose_opponents
                 )
             )

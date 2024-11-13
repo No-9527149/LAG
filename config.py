@@ -1,7 +1,7 @@
 """
 Author       : zzp@buaa.edu.cn
 Date         : 2024-11-11 16:07:45
-LastEditTime : 2024-11-11 18:14:31
+LastEditTime : 2024-11-13 14:44:42
 FilePath     : /LAG/config.py
 Description  : 
 """
@@ -9,6 +9,7 @@ Description  :
 import argparse
 import colorlog
 import logging
+import sys
 from logger import set_color
 
 
@@ -20,6 +21,7 @@ def get_config():
     """
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter)
     parser = _get_prepare_config(parser)
+    parser = _get_JSBSim_env_config(parser)
     parser = _get_replay_buffer_config(parser)
     parser = _get_network_config(parser)
     parser = _get_recurrent_config(parser)
@@ -76,6 +78,12 @@ def _get_prepare_config(parser: argparse.ArgumentParser):
     group.add_argument("--use-wandb", action='store_true', default=False, help="[for wandb usage], by default False, if set, will log date to wandb server.")
     group.add_argument("--user-name", type=str, default='zzp', help="for set proc title use")
     group.add_argument("--wandb-name", type=str, default='zzp', help="[for wandb usage], to specify user's name for simply collecting training data.")
+    return parser
+
+
+def _get_JSBSim_env_config(parser):
+    group = parser.add_argument_group("JSBSim env parameters")
+    group.add_argument("--scenario-name", type=str, default="single_combat_simple", help="which scenario to run")
     return parser
 
 
@@ -305,8 +313,12 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     parser = get_config()
+    args, _ = parser.parse_known_args()
+    for arg_name, arg_value in vars(args).items():
+        parser.set_defaults(**{arg_name: arg_value})
+    update_args = parser.parse_args([])
+
     config_dict = parser_to_dict(parser)
     config_info = parser_dict_to_color_string(config_dict)
     logger = logging.getLogger()
     logger.info(config_info)
-    all_args = parser.parse_args()

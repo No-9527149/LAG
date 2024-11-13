@@ -1,7 +1,7 @@
 """
 Author       : zzp@buaa.edu.cn
 Date         : 2024-11-11 16:07:45
-LastEditTime : 2024-11-11 18:05:18
+LastEditTime : 2024-11-12 20:00:27
 FilePath     : /LAG/envs/JSBSim/core/simulator.py
 Description  : 
 """
@@ -189,6 +189,7 @@ class AircraftSimulator(BaseSimulator):
         for key, value in self.init_state.items():
             self.set_property_value(Catalog[key], value)
         # TODO(zzp): what is run_ic()?
+        # NOTE(zzp): initial conditions
         success = self.jsbsim_exec.run_ic()
         if not success:
             raise RuntimeError("JSBSim failed to init simulation conditions.")

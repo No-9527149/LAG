@@ -1,7 +1,7 @@
 """
 Author       : zzp@buaa.edu.cn
 Date         : 2024-11-11 20:47:48
-LastEditTime : 2024-11-12 17:22:37
+LastEditTime : 2024-11-13 14:48:14
 FilePath     : /LAG/scripts/train/train_jsbsim.py
 Description  : 
 """
@@ -140,43 +140,13 @@ def make_eval_env(all_args):
             )
 
 
-def parse_args(args, parser):
-    """Parse command line arguments for JSBSim environment parameters.
-
-    Args:
-        args (list): List of command line arguments.
-        parser (argparse.ArgumentParser): Argument parser instance.
-
-    Returns:
-        argparse.Namespace: Parsed command line arguments encapsulated in a namespace.
-
-    This function adds a group of arguments related to JSBSim environment parameters to the parser.
-    It includes the scenario name which determines which scenario to run on.
-    The parsed arguments are then returned as an argparse.Namespace object.
-
-    Example:
-        >>> parser = argparse.ArgumentParser()
-        >>> args = ["--scenario-name", "custom_scenario"]
-        >>> parsed_args = parse_args(args, parser)
-        >>> print(parsed_args.scenario_name)
-        custom_scenario
-    """
-    group = parser.add_argument_group("JSBSim Env parameters")
-    group.add_argument(
-        "--scenario-name",
-        type=str,
-        default="single_combat_simple",
-        help="Which scenario to run on",
-    )
-    all_args = parser.parse_known_args(args)[0]
-    return all_args
-
-
 def main(args):
     parser = get_config()
+    all_args = parser.parse_known_args(args)[0]
+    for arg_name, arg_value in vars(all_args).items():
+        parser.set_defaults(**{arg_name: arg_value})
     parser_dict = parser_to_dict(parser)
     all_args_info = parser_dict_to_color_string(parser_dict)
-    all_args = parse_args(args, parser)
 
     # logger
     init_logger(all_args)
