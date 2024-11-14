@@ -1,7 +1,7 @@
 """
 Author       : zzp
 Date         : 2024-11-11 20:47:48
-LastEditTime : 2024-11-13 15:10:27
+LastEditTime : 2024-11-14 17:41:26
 FilePath     : /LAG/runner/selfplay_jsbsim_runner.py
 Description  : No more description
 """
@@ -12,6 +12,7 @@ import numpy as np
 from typing import List
 from .base_runner import Runner, ReplayBuffer
 from .jsbsim_runner import JSBSimRunner
+from ..logger import set_color
 
 
 def _t2n(x):
@@ -190,7 +191,11 @@ class SelfplayJSBSimRunner(JSBSimRunner):
 
     @torch.no_grad()
     def eval(self, total_num_steps):
-        logging.info("\nStart evaluation...")
+        logging.info(
+            set_color(
+                "\n-----------------------Evaluation-----------------------", "yellow"
+            )
+        )
         self.policy.prep_rollout()
         total_episodes = 0
         episode_rewards, opponent_episode_rewards = [], []
@@ -206,7 +211,10 @@ class SelfplayJSBSimRunner(JSBSimRunner):
             for _ in range(self.num_opponents)
         ]
         eval_each_episodes = self.eval_episodes // self.num_opponents
-        logging.info(f" Choose opponents {eval_choose_opponents} for evaluation")
+        logging.info(
+            set_color("Evaluation Opponents:\t", "cyan")
+            + "{}".format(eval_choose_opponents)
+        )
 
         eval_cur_opponent_idx = 0
         while total_episodes < self.eval_episodes:
@@ -223,7 +231,12 @@ class SelfplayJSBSimRunner(JSBSimRunner):
                 self.eval_opponent_policy.prep_rollout()
                 eval_cur_opponent_idx += 1
                 logging.info(
-                    f" Load opponent {policy_idx} for evaluation ({total_episodes}/{self.eval_episodes})"
+                    set_color("Episode:\t", "red")
+                    + set_color(
+                        "{} / {}\t".format(total_episodes, self.eval_episodes), "green"
+                    )
+                    + set_color("Opponent:\t", "cyan")
+                    + "{}".format(policy_idx)
                 )
 
                 # reset obs/rnn/mask
@@ -352,12 +365,17 @@ class SelfplayJSBSimRunner(JSBSimRunner):
         eval_infos["eval_average_episode_rewards"] = eval_average_episode_rewards.mean()
         eval_infos["latest_elo"] = self.latest_elo
         logging.info(
-            " eval average episode rewards: "
-            + str(eval_infos["eval_average_episode_rewards"])
+            set_color("Eval Average Episode Rewards:\t", "pink")
+            + "{}".format(eval_infos["eval_average_episode_rewards"])
         )
-        logging.info(" latest elo score: " + str(self.latest_elo))
+        logging.info(set_color("Latest ELO:\t", "pink") + "{}".format(self.latest_elo))
         self.log_info(eval_infos, total_num_steps)
-        logging.info("...End evaluation")
+        logging.info(
+            set_color(
+                "---------------------END Evaluation---------------------\n",
+                "yellow",
+            )
+        )
 
         # [Selfplay] Reset opponent for the following training
         self.reset_opponent()
@@ -382,7 +400,9 @@ class SelfplayJSBSimRunner(JSBSimRunner):
                 )
             )
             policy.prep_rollout()
-        logging.info(f" Choose opponents {choose_opponents} for training")
+        logging.info(
+            set_color("Training Opponents:\t", "cyan") + "{}".format(choose_opponents)
+        )
 
         # clear buffer
         self.buffer.clear()
@@ -413,7 +433,11 @@ class SelfplayJSBSimRunner(JSBSimRunner):
             )
         )
         self.eval_opponent_policy.prep_rollout()
-        logging.info("\nStart render ...")
+        logging.info(
+            set_color(
+                "\n-----------------------Render-----------------------", "yellow"
+            )
+        )
         render_episode_rewards = 0
         render_obs = self.envs.reset()
         self.envs.render(
@@ -467,4 +491,12 @@ class SelfplayJSBSimRunner(JSBSimRunner):
                 break
             render_opponent_obs = render_obs[:, self.num_agents // 2 :, ...]
             render_obs = render_obs[:, : self.num_agents // 2, ...]
-        print(render_episode_rewards)
+        logging.info(
+            set_color("Render Episode Reward of Agent: ", "pink")
+            + "{}".format(render_episode_rewards)
+        )
+        logging.info(
+            set_color(
+                "---------------------End Render---------------------\n", "yellow"
+            )
+        )

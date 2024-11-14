@@ -1,7 +1,7 @@
 """
 Author       : zzp@buaa.edu.cn
 Date         : 2024-11-11 16:07:45
-LastEditTime : 2024-11-11 18:08:57
+LastEditTime : 2024-11-14 16:18:45
 FilePath     : /LAG/envs/JSBSim/tasks/single_combat_with_missile_task.py
 Description  : 
 """
@@ -158,6 +158,7 @@ class SingleCombatDodgeMissileTask(SingleCombatTask):
                     )
                 )
             )
+            # ? lock_duration ?
             self.lock_duration[agent_id].append(attack_angle < self.max_attack_angle)
             shoot_interval = env.current_step - self._last_shoot_time[agent_id]
 

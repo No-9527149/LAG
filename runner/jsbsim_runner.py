@@ -1,7 +1,7 @@
 """
 Author       : zzp
 Date         : 2024-11-11 20:47:48
-LastEditTime : 2024-11-12 17:17:54
+LastEditTime : 2024-11-14 17:38:33
 FilePath     : /LAG/runner/jsbsim_runner.py
 Description  : No more description
 """
@@ -12,6 +12,7 @@ import logging
 import numpy as np
 from typing import List
 from .base_runner import Runner, ReplayBuffer
+from ..logger import set_color
 
 
 def _t2n(x):
@@ -101,15 +102,25 @@ class JSBSimRunner(Runner):
             if episode % self.log_interval == 0:
                 end = time.time()
                 logging.info(
-                    "\n Scenario {} Algo {} Exp {} updates {}/{} episodes, total num timesteps {}/{}, FPS {}.\n".format(
-                        self.all_args.scenario_name,
-                        self.algorithm_name,
-                        self.experiment_name,
-                        episode,
-                        episodes,
-                        self.total_num_steps,
-                        self.num_env_steps,
-                        int(self.total_num_steps / (end - start)),
+                    "\n"
+                    + set_color("| Scenario:\t", "red")
+                    + set_color("{}\t\t".format(self.all_args.scenario_name), "green")
+                    + set_color("| Algo:\t", "red")
+                    + set_color("{}\t\t".format(self.algorithm_name), "green")
+                    + set_color("| Exp:\t", "red")
+                    + set_color("{}\t|".format(self.experiment_name), "green")
+                    + "\n"
+                    + set_color("| Episode:\t", "red")
+                    + set_color("{} / {}\t".format(episode, episodes), "green")
+                    + set_color("| Timestep: ", "red")
+                    + set_color(
+                        "{} / {}\t".format(self.total_num_steps, self.num_env_steps),
+                        "green",
+                    )
+                    + set_color("| FPS: ", "red")
+                    + set_color(
+                        "{}\t|".format(int(self.total_num_steps / (end - start))),
+                        "green",
                     )
                 )
 
@@ -117,17 +128,15 @@ class JSBSimRunner(Runner):
                     self.buffer.rewards.sum() / (self.buffer.masks == False).sum()
                 )
                 logging.info(
-                    "average episode rewards is {}".format(
-                        train_infos["average_episode_rewards"]
-                    )
+                    set_color("Average Episode Reward: ", "pink")
+                    + "{}".format(train_infos["average_episode_rewards"])
                 )
 
                 if len(heading_turns_list):
                     train_infos["average_heading_turns"] = np.mean(heading_turns_list)
                     logging.info(
-                        "average heading turns is {}".format(
-                            train_infos["average_heading_turns"]
-                        )
+                        set_color("Average Heading Turn: ", "blue")
+                        + "{}".format(train_infos["average_heading_turns"])
                     )
                 self.log_info(train_infos, self.total_num_steps)
 
@@ -209,7 +218,11 @@ class JSBSimRunner(Runner):
 
     @torch.no_grad()
     def eval(self, total_num_steps):
-        logging.info("\nStart evaluation...")
+        logging.info(
+            set_color(
+                "\n-----------------------Evaluation-----------------------", "yellow"
+            )
+        )
         total_episodes, eval_episode_rewards = 0, []
         eval_cumulative_rewards = np.zeros(
             (self.n_eval_rollout_threads, *self.buffer.rewards.shape[2:]),
@@ -270,15 +283,20 @@ class JSBSimRunner(Runner):
             axis=1
         )  # shape: [num_agents, 1]
         logging.info(
-            " eval average episode rewards: "
-            + str(np.mean(eval_infos["eval_average_episode_rewards"]))
+            set_color("Eval Average Episode Rewards: ", "pink")
+            + "{}".format(np.mean(eval_infos["eval_average_episode_rewards"]))
         )
         self.log_info(eval_infos, total_num_steps)
-        logging.info("...End evaluation")
+        logging.info(
+            set_color(
+                "---------------------END Evaluation---------------------\n",
+                "yellow",
+            )
+        )
 
     @torch.no_grad()
     def render(self):
-        logging.info("\nStart render ...")
+        logging.info("\n-----------------------Render-----------------------", 'yellow')
         render_episode_rewards = 0
         render_obs = self.envs.reset()
         render_masks = np.ones((1, *self.buffer.masks.shape[2:]), dtype=np.float32)
@@ -314,9 +332,10 @@ class JSBSimRunner(Runner):
         render_infos = {}
         render_infos["render_episode_reward"] = render_episode_rewards
         logging.info(
-            "render episode reward of agent: "
-            + str(render_infos["render_episode_reward"])
+            set_color("Render Episode Reward of Agent: ", "pink")
+            + "{}".format(render_infos["render_episode_reward"])
         )
+        logging.info("---------------------End Render---------------------\n")
 
     def save(self, episode):
         policy_actor_state_dict = self.policy.actor.state_dict()
