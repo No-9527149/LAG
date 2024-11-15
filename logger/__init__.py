@@ -15,9 +15,9 @@ from logger.utils import get_local_time, ensure_dir
 from pathlib import Path
 
 log_colors_config = {
-    "DEBUG": "cyan",
+    "DEBUG": "green",
     "WARNING": "yellow",
-    "ERROR": "red",
+    "ERROR": "pink",
     "CRITICAL": "red",
 }
 

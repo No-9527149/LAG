@@ -1,7 +1,7 @@
 """
 Author       : zzp@buaa.edu.cn
 Date         : 2024-11-11 20:47:48
-LastEditTime : 2024-11-13 14:48:14
+LastEditTime : 2024-11-14 19:42:55
 FilePath     : /LAG/scripts/train/train_jsbsim.py
 Description  : 
 """

@@ -1,7 +1,7 @@
 """
 Author       : zzp
 Date         : 2024-11-11 20:47:48
-LastEditTime : 2024-11-14 17:41:26
+LastEditTime : 2024-11-15 14:05:32
 FilePath     : /LAG/runner/selfplay_jsbsim_runner.py
 Description  : No more description
 """
@@ -12,7 +12,7 @@ import numpy as np
 from typing import List
 from .base_runner import Runner, ReplayBuffer
 from .jsbsim_runner import JSBSimRunner
-from ..logger import set_color
+from logger import set_color
 
 
 def _t2n(x):
@@ -78,9 +78,8 @@ class SelfplayJSBSimRunner(JSBSimRunner):
             self.eval_opponent_policy = Policy(
                 self.all_args, self.obs_space, self.act_space, device=self.device
             )
-
-        logging.info(
-            "\nLoad selfplay opponents: Algo {}, num_opponents {}.\n".format(
+        logging.warning(
+            "Load selfplay opponents: Algo {}, num_opponents {}.\n".format(
                 self.all_args.selfplay_algorithm, self.num_opponents
             )
         )
@@ -193,7 +192,7 @@ class SelfplayJSBSimRunner(JSBSimRunner):
     def eval(self, total_num_steps):
         logging.info(
             set_color(
-                "\n-----------------------Evaluation-----------------------", "yellow"
+                "-----------------------Evaluation-----------------------", "yellow"
             )
         )
         self.policy.prep_rollout()
@@ -211,14 +210,13 @@ class SelfplayJSBSimRunner(JSBSimRunner):
             for _ in range(self.num_opponents)
         ]
         eval_each_episodes = self.eval_episodes // self.num_opponents
-        logging.info(
-            set_color("Evaluation Opponents:\t", "cyan")
-            + "{}".format(eval_choose_opponents)
-        )
+        # logging.info(
+        #     set_color("********Eval Opponents******** ", "cyan")
+        #     + "{}".format(eval_choose_opponents)
+        # )
 
         eval_cur_opponent_idx = 0
         while total_episodes < self.eval_episodes:
-
             # [Selfplay] Load opponent policy
             if total_episodes >= eval_cur_opponent_idx * eval_each_episodes:
                 policy_idx = eval_choose_opponents[eval_cur_opponent_idx]
@@ -230,14 +228,11 @@ class SelfplayJSBSimRunner(JSBSimRunner):
                 )
                 self.eval_opponent_policy.prep_rollout()
                 eval_cur_opponent_idx += 1
-                logging.info(
-                    set_color("Episode:\t", "red")
-                    + set_color(
-                        "{} / {}\t".format(total_episodes, self.eval_episodes), "green"
-                    )
-                    + set_color("Opponent:\t", "cyan")
-                    + "{}".format(policy_idx)
-                )
+                # logging.info(
+                #     set_color("***********Episode************ ", "red")
+                #     + "{} / {}".format(total_episodes, self.eval_episodes)
+                # )
+                logging.info(set_color(" Opponent: ", "red") + "{}".format(policy_idx))
 
                 # reset obs/rnn/mask
                 obs = self.eval_envs.reset()
@@ -365,20 +360,20 @@ class SelfplayJSBSimRunner(JSBSimRunner):
         eval_infos["eval_average_episode_rewards"] = eval_average_episode_rewards.mean()
         eval_infos["latest_elo"] = self.latest_elo
         logging.info(
-            set_color("Eval Average Episode Rewards:\t", "pink")
+            set_color(" Reward  : ", "pink")
             + "{}".format(eval_infos["eval_average_episode_rewards"])
         )
-        logging.info(set_color("Latest ELO:\t", "pink") + "{}".format(self.latest_elo))
+        logging.info(set_color(" ELO     : ", "pink") + "{}".format(self.latest_elo))
         self.log_info(eval_infos, total_num_steps)
-        logging.info(
-            set_color(
-                "---------------------END Evaluation---------------------\n",
-                "yellow",
-            )
-        )
 
         # [Selfplay] Reset opponent for the following training
         self.reset_opponent()
+        logging.info(
+            set_color(
+                "---------------------END Evaluation---------------------",
+                "yellow",
+            )
+        )
 
     def save(self, episode):
         policy_actor_state_dict = self.policy.actor.state_dict()
@@ -401,7 +396,7 @@ class SelfplayJSBSimRunner(JSBSimRunner):
             )
             policy.prep_rollout()
         logging.info(
-            set_color("Training Opponents:\t", "cyan") + "{}".format(choose_opponents)
+            set_color("Next Opponent: ", "cyan") + "{}".format(choose_opponents)
         )
 
         # clear buffer

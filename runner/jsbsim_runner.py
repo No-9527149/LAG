@@ -1,7 +1,7 @@
 """
 Author       : zzp
 Date         : 2024-11-11 20:47:48
-LastEditTime : 2024-11-14 17:38:33
+LastEditTime : 2024-11-15 14:05:11
 FilePath     : /LAG/runner/jsbsim_runner.py
 Description  : No more description
 """
@@ -12,8 +12,7 @@ import logging
 import numpy as np
 from typing import List
 from .base_runner import Runner, ReplayBuffer
-from ..logger import set_color
-
+from logger import set_color
 
 def _t2n(x):
     return x.detach().cpu().numpy()
@@ -54,6 +53,11 @@ class JSBSimRunner(Runner):
         episodes = self.num_env_steps // self.buffer_size // self.n_rollout_threads
 
         for episode in range(episodes):
+            logging.info(
+                set_color(
+                    "------------------------Training------------------------", "blue"
+                )
+            )
 
             heading_turns_list = []
 
@@ -102,15 +106,16 @@ class JSBSimRunner(Runner):
             if episode % self.log_interval == 0:
                 end = time.time()
                 logging.info(
-                    "\n"
-                    + set_color("| Scenario:\t", "red")
-                    + set_color("{}\t\t".format(self.all_args.scenario_name), "green")
-                    + set_color("| Algo:\t", "red")
-                    + set_color("{}\t\t".format(self.algorithm_name), "green")
-                    + set_color("| Exp:\t", "red")
-                    + set_color("{}\t|".format(self.experiment_name), "green")
-                    + "\n"
-                    + set_color("| Episode:\t", "red")
+                    # "\n"
+                    # + set_color("| Scenario: ", "red")
+                    # + set_color("{}\t".format(self.all_args.scenario_name), "green")
+                    # + set_color("| Algo:     ", "red")
+                    # + set_color("{}\t\t\t\t".format(self.algorithm_name), "green")
+                    # + set_color("| Exp: ", "red")
+                    # + set_color("{}\t".format(self.experiment_name), "green")
+                    # + set_color("|", "red")
+                    # + "\n"
+                    + set_color("| Episode:  ", "red")
                     + set_color("{} / {}\t".format(episode, episodes), "green")
                     + set_color("| Timestep: ", "red")
                     + set_color(
@@ -119,16 +124,17 @@ class JSBSimRunner(Runner):
                     )
                     + set_color("| FPS: ", "red")
                     + set_color(
-                        "{}\t|".format(int(self.total_num_steps / (end - start))),
+                        "{}\t".format(int(self.total_num_steps / (end - start))),
                         "green",
                     )
+                    + set_color("|", "red")
                 )
 
                 train_infos["average_episode_rewards"] = (
                     self.buffer.rewards.sum() / (self.buffer.masks == False).sum()
                 )
                 logging.info(
-                    set_color("Average Episode Reward: ", "pink")
+                    set_color(" Reward  : ", "pink")
                     + "{}".format(train_infos["average_episode_rewards"])
                 )
 
@@ -139,6 +145,11 @@ class JSBSimRunner(Runner):
                         + "{}".format(train_infos["average_heading_turns"])
                     )
                 self.log_info(train_infos, self.total_num_steps)
+                logging.info(
+                    set_color(
+                        "----------------------END Training----------------------", "blue"
+                    )
+                )
 
             # eval
             if episode % self.eval_interval == 0 and episode != 0 and self.use_eval:
@@ -220,7 +231,7 @@ class JSBSimRunner(Runner):
     def eval(self, total_num_steps):
         logging.info(
             set_color(
-                "\n-----------------------Evaluation-----------------------", "yellow"
+                "-----------------------Evaluation-----------------------", "yellow"
             )
         )
         total_episodes, eval_episode_rewards = 0, []

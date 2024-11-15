@@ -1,0 +1,5 @@
+| Scenario: 1v1/ShootMissile/HierarchicalSelfplay   | Algo:     ppo                 | Exp: v1   |
+| Episode:  5 / 1041                                | Timestep: 576000 / 100000000  | FPS: 872  |
+
+| Episode:  1000 / 1041 | Timestep: 99999999 / 100000000    | FPS: 872  |
+| Episode:  5 / 1041    | Timestep: 96000 / 100000000       | FPS: 872  |

@@ -1,0 +1,84 @@
+#!/bin/sh
+###
+ # @Author       : zzp@buaa.edu.cn
+ # @Date         : 2024-11-11 20:47:48
+ # @LastEditTime : 2024-11-15 14:14:41
+ # @FilePath     : /LAG/scripts/train_selfplay_shoot.text
+ # @Description  : 
+### 
+
+env="SingleCombat"
+scenario="1v1/ShootMissile/HierarchicalSelfplay"
+algo="ppo"
+exp="v1"
+seed=3407
+
+echo "env is ${env}, scenario is ${scenario}, algo is ${algo}, exp is ${exp}, seed is ${seed}"
+CUDA_VISIBLE_DEVICES=1 python train/train_jsbsim.py \
+    # Prepare parameters
+    --env-name ${env} \
+    --algorithm-name ${algo} \
+    --experiment-name ${exp} \
+    --seed ${seed} \
+    --cuda \
+    --n-training-threads 1 \
+    --n-rollout-threads 32 \
+    --num-env-steps 1e8 \
+    # // \ --model-dir None 
+    \--use-wandb \
+    --user-name "zzp" \
+    --wandb-name "zzp" \
+    # JSBSim env parameters
+    \--scenario-name ${scenario} \
+    # Replay buffer parameters
+    \--gamma 0.99 \
+    --buffer-size 3000 \
+    # ! --use-proper-time-limits (By default False)
+    # // \ --use-proper-time-limitis
+    # // \ --use-gae
+    # // \ --gae-lambda 0.95
+    # Network parameters
+    \--hidden-size "128 128" \ 
+    \--act-hidden-size "128 128" \
+    # // \ --activation-id 1
+    # ! --use-feature-normalization(By default False)
+    # // \ --use-feature-normalization
+    # ! --gain
+    # // \ --gain 0.01
+    # ! --use-prior(By default False)
+    \--use-prior \
+    # Recurrent parameters
+    # // \ --use-recurrent-policy
+    \--recurrent-hidden-size 128 \
+    --recurrent-hidden-layers 1 \
+    --data-chunk-length 8 \
+    # Optimizer parameters
+    \--lr 3e-4 \
+    # PPO parameters
+    \--ppo-epoch 4 \
+    --clip-params 0.2 \
+    # ! --use-clip-value-loss(By default False)
+    # // \ --use-clip-value-loss
+    \--num-mini-batch 5 \
+    # // \ --value-loss-coef 1
+    \--entropy-coef 1e-3 \
+    # ! --not-use-max-grad-norm(By default True)
+    # // \ --not-use-max-grad-norm
+    \--max-grad-norm 2 \
+    # Selfplay parameters
+    \--use-selfplay \
+    --selfplay-algorithm "fsp" \
+    --n-choose-opponents 1 \
+    # // \ --init-elo 1000.0
+    # Save parameters
+    \--save-interval 1 \
+    # Log parameters
+    \--log-interval 1 \
+    # Render parameters
+    # // \ --render-opponent-index 'lateset'
+    # // \ --render-index 'latest'
+    # Eval parameters
+    \--use-eval \
+    --n-eval-rollout-threads 1 \
+    --eval-interval 1 \
+    --eval-episodes 1 \

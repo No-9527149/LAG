@@ -1,7 +1,7 @@
 """
 Author       : zzp@buaa.edu.cn
 Date         : 2024-11-11 16:07:45
-LastEditTime : 2024-11-13 14:44:42
+LastEditTime : 2024-11-15 14:14:22
 FilePath     : /LAG/config.py
 Description  : 
 """
@@ -101,7 +101,7 @@ def _get_replay_buffer_config(parser: argparse.ArgumentParser):
         --gae-lambda <float>
             gae lambda parameter (default: 0.95)
     """
-    group = parser.add_argument_group("Replay Buffer parameters")
+    group = parser.add_argument_group("Replay buffer parameters")
     group.add_argument("--gamma", type=float, default=0.99, help='discount factor for rewards (default: 0.99)')
     group.add_argument("--buffer-size", type=int, default=200, help="maximum storage in the buffer.")
     group.add_argument("--use-proper-time-limits", action='store_true', default=False, help='compute returns taking into account time limits')
@@ -192,7 +192,7 @@ def _get_ppo_config(parser: argparse.ArgumentParser):
     group.add_argument("--num-mini-batch", type=int, default=1, help='number of batches for ppo (default: 1)')
     group.add_argument("--value-loss-coef", type=float, default=1, help='ppo value loss coefficient (default: 1)')
     group.add_argument("--entropy-coef", type=float, default=0.01, help='entropy term coefficient (default: 0.01)')
-    group.add_argument("--use-max-grad-norm", action='store_false', default=True, help="By default, use max norm of gradients. If set, do not use.")
+    group.add_argument("--not-use-max-grad-norm", action='store_false', default=True, help="By default, use max norm of gradients. If set, do not use.")
     group.add_argument("--max-grad-norm", type=float, default=2, help='max norm of gradients (default: 2)')
     return parser
 
