@@ -1,17 +1,19 @@
 """
 Author       : zzp@buaa.edu.cn
 Date         : 2024-11-11 16:07:45
-LastEditTime : 2024-11-11 18:17:27
+LastEditTime : 2024-11-18 16:01:27
 FilePath     : /LAG/algorithms/ppo/ppo_trainer.py
 Description  : 
 """
 
 import torch
 import torch.nn as nn
+from tqdm import tqdm
 from typing import Union, List
 from .ppo_policy import PPOPolicy
 from ..utils.buffer import ReplayBuffer
 from ..utils.utils import check, get_gard_norm
+from logger import set_color
 
 
 class PPOTrainer:
@@ -71,9 +73,9 @@ class PPOTrainer:
         policy_loss = -policy_loss.mean()
 
         if self.use_clipped_value_loss:
-            value_pred_clipped = value_predictions_batch + (values - value_predictions_batch).clamp(
-                -self.clip_param, self.clip_param
-            )
+            value_pred_clipped = value_predictions_batch + (
+                values - value_predictions_batch
+            ).clamp(-self.clip_param, self.clip_param)
             value_losses = (values - returns_batch).pow(2)
             value_losses_clipped = (value_pred_clipped - returns_batch).pow(2)
             value_loss = 0.5 * torch.max(value_losses, value_losses_clipped)
@@ -122,7 +124,9 @@ class PPOTrainer:
         train_info["critic_grad_norm"] = 0
         train_info["ratio"] = 0
 
-        for _ in range(self.ppo_epoch):
+        for _ in tqdm(
+            range(self.ppo_epoch), desc=set_color(f"PPO Trainer ", "yellow"), ncols=100
+        ):
             if self.use_recurrent_policy:
                 data_generator = ReplayBuffer.recurrent_generator(
                     buffer, self.num_mini_batch, self.data_chunk_length

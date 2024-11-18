@@ -4,10 +4,9 @@ env="SingleCombat"
 scenario="1v1/ShootMissile/HierarchicalSelfplay"
 algo="ppo"
 exp="v1"
-seed=1
+seed=3407
 
-echo "env is ${env}, scenario is ${scenario}, algo is ${algo}, exp is ${exp}, seed is ${seed}"
-CUDA_VISIBLE_DEVICES=1 python train/train_jsbsim.py \
+CUDA_VISIBLE_DEVICES=0 python train/train_jsbsim.py \
     --env-name ${env} \
     --algorithm-name ${algo} \
     --experiment-name ${exp} \

@@ -1,10 +1,10 @@
-'''
+"""
 Author       : zzp@buaa.edu.cn
 Date         : 2024-11-11 20:47:48
-LastEditTime : 2024-11-11 21:31:14
+LastEditTime : 2024-11-15 19:21:36
 FilePath     : /LAG/logger/__init__.py
 Description  : No more description
-'''
+"""
 
 import logging
 import os
@@ -15,6 +15,7 @@ from logger.utils import get_local_time, ensure_dir
 from pathlib import Path
 
 log_colors_config = {
+    # "INFO": "white",
     "DEBUG": "green",
     "WARNING": "yellow",
     "ERROR": "pink",
@@ -61,7 +62,13 @@ def init_logger(all_args):
     LOGROOT = "./log/"
     dir_name = os.path.dirname(LOGROOT)
     ensure_dir(dir_name)
-    log_dir_name = (Path(dir_name) / all_args.env_name / all_args.scenario_name / all_args.algorithm_name / all_args.experiment_name)
+    log_dir_name = (
+        Path(dir_name)
+        / all_args.env_name
+        / all_args.scenario_name
+        / all_args.algorithm_name
+        / all_args.experiment_name
+    )
     ensure_dir(log_dir_name)
     log_file_name = "{}.log".format(get_local_time())
     log_file_path = os.path.join(log_dir_name, log_file_name)

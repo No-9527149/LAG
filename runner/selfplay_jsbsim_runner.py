@@ -1,7 +1,7 @@
 """
 Author       : zzp
 Date         : 2024-11-11 20:47:48
-LastEditTime : 2024-11-15 14:05:32
+LastEditTime : 2024-11-18 16:00:52
 FilePath     : /LAG/runner/selfplay_jsbsim_runner.py
 Description  : No more description
 """
@@ -78,7 +78,7 @@ class SelfplayJSBSimRunner(JSBSimRunner):
             self.eval_opponent_policy = Policy(
                 self.all_args, self.obs_space, self.act_space, device=self.device
             )
-        logging.warning(
+        logging.critical(
             "Load selfplay opponents: Algo {}, num_opponents {}.\n".format(
                 self.all_args.selfplay_algorithm, self.num_opponents
             )
@@ -191,9 +191,7 @@ class SelfplayJSBSimRunner(JSBSimRunner):
     @torch.no_grad()
     def eval(self, total_num_steps):
         logging.info(
-            set_color(
-                "-----------------------Evaluation-----------------------", "yellow"
-            )
+            set_color(">>>>>>>>>>>>>>>>>>>>>Evaluate<<<<<<<<<<<<<<<<<<<<<", "red")
         )
         self.policy.prep_rollout()
         total_episodes = 0
@@ -232,7 +230,7 @@ class SelfplayJSBSimRunner(JSBSimRunner):
                 #     set_color("***********Episode************ ", "red")
                 #     + "{} / {}".format(total_episodes, self.eval_episodes)
                 # )
-                logging.info(set_color(" Opponent: ", "red") + "{}".format(policy_idx))
+                # logging.info(set_color(" Opponent: ", "red") + "{}".format(policy_idx))
 
                 # reset obs/rnn/mask
                 obs = self.eval_envs.reset()
@@ -359,19 +357,25 @@ class SelfplayJSBSimRunner(JSBSimRunner):
         eval_infos = {}
         eval_infos["eval_average_episode_rewards"] = eval_average_episode_rewards.mean()
         eval_infos["latest_elo"] = self.latest_elo
+
         logging.info(
-            set_color(" Reward  : ", "pink")
+            set_color("Opponent     : ", "yellow") + "{}".format(eval_choose_opponents)
+        )
+        logging.info(
+            set_color("Reward       : ", "green")
             + "{}".format(eval_infos["eval_average_episode_rewards"])
         )
-        logging.info(set_color(" ELO     : ", "pink") + "{}".format(self.latest_elo))
+        logging.info(
+            set_color("ELO          : ", "blue") + "{}".format(self.latest_elo)
+        )
         self.log_info(eval_infos, total_num_steps)
 
         # [Selfplay] Reset opponent for the following training
         self.reset_opponent()
         logging.info(
             set_color(
-                "---------------------END Evaluation---------------------",
-                "yellow",
+                ">>>>>>>>>>>>>>>>>>>>>Evaluate<<<<<<<<<<<<<<<<<<<<<",
+                "red",
             )
         )
 

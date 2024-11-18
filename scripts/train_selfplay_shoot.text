@@ -2,7 +2,7 @@
 ###
  # @Author       : zzp@buaa.edu.cn
  # @Date         : 2024-11-11 20:47:48
- # @LastEditTime : 2024-11-15 14:14:41
+ # @LastEditTime : 2024-11-15 14:17:45
  # @FilePath     : /LAG/scripts/train_selfplay_shoot.text
  # @Description  : 
 ### 
@@ -62,8 +62,8 @@ CUDA_VISIBLE_DEVICES=1 python train/train_jsbsim.py \
     \--num-mini-batch 5 \
     # // \ --value-loss-coef 1
     \--entropy-coef 1e-3 \
-    # ! --not-use-max-grad-norm(By default True)
-    # // \ --not-use-max-grad-norm
+    # ! --use-max-grad-norm(By default True)
+    # // \ --use-max-grad-norm
     \--max-grad-norm 2 \
     # Selfplay parameters
     \--use-selfplay \
