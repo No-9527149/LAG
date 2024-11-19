@@ -37,7 +37,7 @@ aircraft_configs: {
     },
   }
 }
-# (lontitude, latitude, altitude)
+# (longitude, latitude, altitude)
 battle_field_center: [120.0, 60.0, 0.0]
 
 # reward config

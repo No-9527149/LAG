@@ -1,7 +1,7 @@
 """
 Author       : zzp
 Date         : 2024-11-11 20:47:48
-LastEditTime : 2024-11-18 16:01:07
+LastEditTime : 2024-11-19 13:29:40
 FilePath     : /LAG/runner/jsbsim_runner.py
 Description  : No more description
 """
@@ -150,7 +150,7 @@ class JSBSimRunner(Runner):
                 self.log_info(train_infos, self.total_num_steps)
 
             logging.info(
-                set_color(">>>>>>>>>>>>>>>>>>>>>Training<<<<<<<<<<<<<<<<<<<<", "red")
+                set_color(">>>>>>>>>>>>>>>>>>>>>>Training<<<<<<<<<<<<<<<<<<<<<", "pink")
             )
 
             # eval
@@ -232,7 +232,7 @@ class JSBSimRunner(Runner):
     @torch.no_grad()
     def eval(self, total_num_steps):
         logging.info(
-            set_color("--------------------Evaluation--------------------", "yellow")
+            set_color(">>>>>>>>>>>>>>>>>>>>>Evaluate<<<<<<<<<<<<<<<<<<<<<", "red")
         )
         total_episodes, eval_episode_rewards = 0, []
         eval_cumulative_rewards = np.zeros(
@@ -294,20 +294,20 @@ class JSBSimRunner(Runner):
             axis=1
         )  # shape: [num_agents, 1]
         logging.info(
-            set_color("Eval Average Episode Rewards: ", "pink")
+            set_color("Reward : ", "green")
             + "{}".format(np.mean(eval_infos["eval_average_episode_rewards"]))
         )
         self.log_info(eval_infos, total_num_steps)
         logging.info(
             set_color(
-                "---------------------END Evaluation---------------------\n",
-                "yellow",
+                ">>>>>>>>>>>>>>>>>>>>>>Evaluate<<<<<<<<<<<<<<<<<<<<<<",
+                "pink",
             )
         )
 
     @torch.no_grad()
     def render(self):
-        logging.info("\n-----------------------Render-----------------------", "yellow")
+        logging.info("\n>>>>>>>>>>>>>>>>>>>>>>Render<<<<<<<<<<<<<<<<<<<<<<", "red")
         render_episode_rewards = 0
         render_obs = self.envs.reset()
         render_masks = np.ones((1, *self.buffer.masks.shape[2:]), dtype=np.float32)
@@ -343,10 +343,10 @@ class JSBSimRunner(Runner):
         render_infos = {}
         render_infos["render_episode_reward"] = render_episode_rewards
         logging.info(
-            set_color("Render Episode Reward of Agent: ", "pink")
+            set_color("Reward : ", "blue")
             + "{}".format(render_infos["render_episode_reward"])
         )
-        logging.info("---------------------End Render---------------------\n")
+        logging.info("\n>>>>>>>>>>>>>>>>>>>>>>Render<<<<<<<<<<<<<<<<<<<<<<", "pink")
 
     def save(self, episode):
         policy_actor_state_dict = self.policy.actor.state_dict()

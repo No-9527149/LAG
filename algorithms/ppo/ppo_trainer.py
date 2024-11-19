@@ -1,7 +1,7 @@
 """
 Author       : zzp@buaa.edu.cn
 Date         : 2024-11-11 16:07:45
-LastEditTime : 2024-11-18 16:01:27
+LastEditTime : 2024-11-18 20:33:52
 FilePath     : /LAG/algorithms/ppo/ppo_trainer.py
 Description  : 
 """
@@ -125,7 +125,7 @@ class PPOTrainer:
         train_info["ratio"] = 0
 
         for _ in tqdm(
-            range(self.ppo_epoch), desc=set_color(f"PPO Trainer ", "yellow"), ncols=100
+            range(self.ppo_epoch), desc=set_color(f"PPO Trainer ", "yellow"), ncols=101
         ):
             if self.use_recurrent_policy:
                 data_generator = ReplayBuffer.recurrent_generator(
