@@ -1,7 +1,7 @@
 """
 Author       : zzp@buaa.edu.cn
 Date         : 2024-11-11 16:07:45
-LastEditTime : 2024-11-11 17:53:46
+LastEditTime : 2024-11-26 19:50:48
 FilePath     : /LAG/envs/JSBSim/reward_functions/altitude_reward.py
 Description  : 
 """
@@ -34,7 +34,7 @@ class AltitudeReward(BaseRewardFunction):
             self.__class__.__name__ + item for item in ["", "_Pv", "_PH"]
         ]
 
-    def get_reward(self, task, env, agent_id):
+    def get_reward(self, task, env, agent_id, info={}):
         """
         Reward is the sum of all the punishments.
 

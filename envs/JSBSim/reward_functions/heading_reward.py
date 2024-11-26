@@ -25,7 +25,7 @@ class HeadingReward(BaseRewardFunction):
             for item in ["", "_heading", "_alt", "_roll", "_speed"]
         ]
 
-    def get_reward(self, task, env, agent_id):
+    def get_reward(self, task, env, agent_id, info={}):
         """
         Reward is built as a geometric mean of scaled gaussian rewards for each relevant variable
 

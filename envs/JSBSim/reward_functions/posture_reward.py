@@ -1,7 +1,7 @@
 """
 Author       : zzp@buaa.edu.cn
 Date         : 2024-11-11 16:07:45
-LastEditTime : 2024-11-11 17:54:49
+LastEditTime : 2024-11-26 19:51:33
 FilePath     : /LAG/envs/JSBSim/reward_functions/posture_reward.py
 Description  : 
 """
@@ -41,7 +41,7 @@ class PostureReward(BaseRewardFunction):
             self.__class__.__name__ + item for item in ["", "_orn", "_range"]
         ]
 
-    def get_reward(self, task, env, agent_id):
+    def get_reward(self, task, env, agent_id, info={}):
         """
         Reward is a complex function of AO, TA and R in the last timestep.
 

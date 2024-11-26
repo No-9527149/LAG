@@ -1,7 +1,7 @@
 """
 Author       : zzp@buaa.edu.cn
 Date         : 2024-11-11 16:07:45
-LastEditTime : 2024-11-11 18:07:19
+LastEditTime : 2024-11-26 19:51:51
 FilePath     : /LAG/envs/JSBSim/reward_functions/shoot_penalty_reward.py
 Description  : 
 """
@@ -26,7 +26,7 @@ class ShootPenaltyReward(BaseRewardFunction):
         }
         return super().reset(task, env)
 
-    def get_reward(self, task, env, agent_id):
+    def get_reward(self, task, env, agent_id, info={}):
         """
         Reward is the sum of all the events.
 

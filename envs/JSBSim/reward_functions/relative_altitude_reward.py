@@ -1,7 +1,7 @@
 """
 Author       : zzp@buaa.edu.cn
 Date         : 2024-11-11 16:07:45
-LastEditTime : 2024-11-11 18:06:50
+LastEditTime : 2024-11-26 19:51:40
 FilePath     : /LAG/envs/JSBSim/reward_functions/relative_altitude_reward.py
 Description  : 
 """
@@ -25,7 +25,7 @@ class RelativeAltitudeReward(BaseRewardFunction):
         super().__init__(config)
         self.KH = getattr(self.config, f"{self.__class__.__name__}_KH", 1.0)  # km
 
-    def get_reward(self, task, env, agent_id):
+    def get_reward(self, task, env, agent_id, info={}):
         """
         Reward is the sum of all the punishments.
 

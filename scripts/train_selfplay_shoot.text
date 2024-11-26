@@ -2,7 +2,7 @@
 ###
  # @Author       : zzp@buaa.edu.cn
  # @Date         : 2024-11-11 20:47:48
- # @LastEditTime : 2024-11-15 14:17:45
+ # @LastEditTime : 2024-11-25 21:08:49
  # @FilePath     : /LAG/scripts/train_selfplay_shoot.text
  # @Description  : 
 ### 
@@ -34,7 +34,7 @@ CUDA_VISIBLE_DEVICES=1 python train/train_jsbsim.py \
     \--gamma 0.99 \
     --buffer-size 3000 \
     # ! --use-proper-time-limits (By default False)
-    # // \ --use-proper-time-limitis
+    # // \ --use-proper-time-limits
     # // \ --use-gae
     # // \ --gae-lambda 0.95
     # Network parameters

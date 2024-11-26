@@ -1,7 +1,7 @@
 """
 Author       : zzp@buaa.edu.cn
 Date         : 2024-11-11 16:07:45
-LastEditTime : 2024-11-11 18:06:25
+LastEditTime : 2024-11-26 19:50:42
 FilePath     : /LAG/envs/JSBSim/reward_functions/missile_posture_reward.py
 Description  : 
 """
@@ -24,7 +24,7 @@ class MissilePostureReward(BaseRewardFunction):
         self.previous_missile_v = None
         return super().reset(task, env)
 
-    def get_reward(self, task, env, agent_id):
+    def get_reward(self, task, env, agent_id, info={}):
         """
         Reward is velocity attenuation of the missile
 

@@ -1,7 +1,7 @@
 """
 Author       : zzp@buaa.edu.cn
 Date         : 2024-11-11 16:07:45
-LastEditTime : 2024-11-11 17:52:53
+LastEditTime : 2024-11-26 19:50:51
 FilePath     : /LAG/envs/JSBSim/reward_functions/reward_function_base.py
 Description  : 
 """
@@ -46,7 +46,7 @@ class BaseRewardFunction(ABC):
         self.reward_trajectory.clear()
 
     @abstractmethod
-    def get_reward(self, task, env, agent_id):
+    def get_reward(self, task, env, agent_id, info={}):
         """Compute the reward at the current timestep.
         Overwritten by subclasses.
 

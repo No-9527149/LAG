@@ -1,7 +1,7 @@
 """
 Author       : zzp@buaa.edu.cn
 Date         : 2024-11-11 16:07:45
-LastEditTime : 2024-11-11 18:10:08
+LastEditTime : 2024-11-26 21:17:36
 FilePath     : /LAG/envs/JSBSim/utils/utils.py
 Description  : 
 """
@@ -109,6 +109,23 @@ def get2d_AO_TA_R(ego_feature, enm_feature, return_side=False):
     else:
         side_flag = np.sign(np.cross([ego_vx, ego_vy], [delta_x, delta_y]))
         return ego_AO, ego_TA, R, side_flag
+
+
+def get_pincer_angle(ego_feature, enm_feature, missile_feature):
+    ego_x, ego_y, ego_z, ego_vx, ego_vy, ego_vz = ego_feature
+    enm_x, enm_y, enm_z, _, _, _, = enm_feature
+    _, _, _, mis_vx, mis_vy, mis_vz = missile_feature
+    ego_v = np.array([ego_vx, ego_vy, ego_vz])
+    ego_v_unit_vector = ego_v / np.linalg.norm(ego_v)
+    delta_r = np.array([enm_x - ego_x, enm_y - ego_y, enm_z - ego_z])
+    mis_v_xy = 0.6 * np.array([mis_vx, mis_vy, mis_vz / 3]) / np.linalg.norm(
+        np.array([mis_vx, mis_vy, mis_vz / 2])
+    ) + 0.4 * delta_r / np.linalg.norm(delta_r)
+    mis_v_xy_unit_vector = mis_v_xy / np.linalg.norm(mis_v_xy)
+    pincer_angle = np.arccos(
+        np.clip(np.dot(ego_v_unit_vector, mis_v_xy_unit_vector), -1.0, 1.0)
+    )
+    return pincer_angle
 
 
 def in_range_deg(angle):

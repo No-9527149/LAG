@@ -1,39 +1,43 @@
 """
-Author       : zzp
-Date         : 2024-11-11 20:47:48
-LastEditTime : 2024-11-19 13:54:19
-FilePath     : /LAG/runner/jsbsim_runner.py
-Description  : No more description
+Author       : zzp@buaa.edu.cn
+Date         : 2024-11-18 16:40:15
+LastEditTime : 2024-11-19 14:07:29
+FilePath     : /LAG/runner/collaboration_runner.py
+Description  : 
 """
 
+import sys
 import time
 import torch
 import logging
 import numpy as np
 from tqdm import tqdm
 from typing import List
-from .base_runner import Runner, ReplayBuffer
 from logger import set_color
+from .base_runner import Runner, ReplayBuffer
+from .jsbsim_runner import JSBSimRunner
 
 
 def _t2n(x):
     return x.detach().cpu().numpy()
 
 
-class JSBSimRunner(Runner):
+class CollaborationRunner(JSBSimRunner):
 
     def load(self):
+        # load parameters
         self.obs_space = self.envs.observation_space
         self.act_space = self.envs.action_space
         self.num_agents = self.envs.num_agents
-        self.use_selfplay = self.all_args.use_selfplay
+        self.use_selfplay = self.envs.use_selfplay
+        assert self.use_selfplay == False, "Collaboration can not use selfplay"
 
-        # policy & algorithm
+        # policy and algorithm
         if self.algorithm_name == "ppo":
             from algorithms.ppo.ppo_trainer import PPOTrainer as Trainer
             from algorithms.ppo.ppo_policy import PPOPolicy as Policy
         else:
-            raise NotImplementedError
+            raise NotImplemented
         self.policy = Policy(
             self.all_args, self.obs_space, self.act_space, device=self.device
         )
@@ -49,24 +53,20 @@ class JSBSimRunner(Runner):
 
     def run(self):
         self.warmup()
-
         start = time.time()
         self.total_num_steps = 0
         episodes = self.num_env_steps // self.buffer_size // self.n_rollout_threads
 
         for episode in range(episodes):
             logging.info(
-                set_color(">>>>>>>>>>>>>>>>>>>>>Training<<<<<<<<<<<<<<<<<<<<<", "red")
+                set_color(">>>>>>>>>>>>>>>>>>>>>>Training<<<<<<<<<<<<<<<<<<<<<<", "red")
             )
-
             heading_turns_list = []
-
             for step in tqdm(
                 range(self.buffer_size),
                 desc=set_color(f"Collect {episode:>4}", "yellow"),
-                ncols=107,
             ):
-                # Sample actions
+                # sample actions
                 (
                     values,
                     actions,
@@ -74,15 +74,14 @@ class JSBSimRunner(Runner):
                     rnn_states_actor,
                     rnn_states_critic,
                 ) = self.collect(step)
-
-                # Observe reward and next obs
+                # observe reward and next observation
                 obs, rewards, dones, infos = self.envs.step(actions)
-
-                # Extra recorded information
+                # extra recorded information
+                # TODO(zzp): info
                 for info in infos:
                     if "heading_turn_counts" in info:
                         heading_turns_list.append(info["heading_turn_counts"])
-
+                # generate insert data
                 data = (
                     obs,
                     actions,
@@ -93,46 +92,31 @@ class JSBSimRunner(Runner):
                     rnn_states_actor,
                     rnn_states_critic,
                 )
-
                 # insert data into buffer
                 self.insert(data)
-
             # compute return and update network
             self.compute()
             train_infos = self.train()
-
             # post process
             self.total_num_steps = (
                 (episode + 1) * self.buffer_size * self.n_rollout_threads
             )
-
-            # log information
+            # log info
             if episode % self.log_interval == 0:
                 end = time.time()
+                # ? FPS ?
+                # NOTE(zzp): FPS means number of steps per sec
                 logging.info(
-                    # "\n"
-                    # + set_color("| Scenario: ", "red")
-                    # + set_color("{}\t".format(self.all_args.scenario_name), "green")
-                    # + set_color("| Algo:     ", "red")
-                    # + set_color("{}\t\t\t\t".format(self.algorithm_name), "green")
-                    # + set_color("| Exp: ", "red")
-                    # + set_color("{}\t".format(self.experiment_name), "green")
-                    # + set_color("|", "red")
-                    # + "\n"
                     set_color("Episode: ", "green")
-                    + set_color("{} / {} ".format(episode, episodes), "blue")
+                    + set_color("{} / {}".format(episode, episodes), "blue")
                     + set_color("Timestep: ", "green")
                     + set_color(
-                        "{} / {} ".format(self.total_num_steps, self.num_env_steps),
+                        "{} / {}".format(self.total_num_steps, self.num_env_steps),
                         "blue",
                     )
                     + set_color("FPS: ", "green")
-                    + set_color(
-                        "{} ".format(int(self.total_num_steps / (end - start))),
-                        "blue",
-                    )
+                    + set_color("{}".format(int(self.total_num_steps / (end - start))))
                 )
-
                 train_infos["average_episode_rewards"] = (
                     self.buffer.rewards.sum() / (self.buffer.masks == False).sum()
                 )
@@ -140,25 +124,23 @@ class JSBSimRunner(Runner):
                     set_color("Reward : ", "cyan")
                     + "{}".format(train_infos["average_episode_rewards"]),
                 )
-
                 if len(heading_turns_list):
-                    train_infos["average_heading_turns"] = np.mean(heading_turns_list)
+                    train_infos["average_episode_rewards"] = np.mean(heading_turns_list)
                     logging.info(
                         set_color("Turn   : ", "pink")
-                        + "{}".format(train_infos["average_heading_turns"])
+                        + "{}".format(train_infos["average_episode_turns"])
                     )
                 self.log_info(train_infos, self.total_num_steps)
-
             logging.info(
-                set_color(">>>>>>>>>>>>>>>>>>>>>Training<<<<<<<<<<<<<<<<<<<<<", "pink")
+                set_color(
+                    ">>>>>>>>>>>>>>>>>>>>>>Training<<<<<<<<<<<<<<<<<<<<<<", "pink"
+                )
             )
-
             # eval
-            if episode % self.eval_interval == 0 and episode != 0 and self.use_eval:
+            if self.use_eval and episode != 0 and episode % self.eval_interval == 0:
                 self.eval(self.total_num_steps)
-
-            # save model
-            if (episode % self.save_interval == 0) or (episode == episodes - 1):
+            # sava model
+            if episode % self.save_interval == 0 or episode == episode - 1:
                 self.save(episode)
 
     def warmup(self):
@@ -178,18 +160,12 @@ class JSBSimRunner(Runner):
                 np.concatenate(self.buffer.masks[step]),
             )
         )
-        # split parallel data [N*M, shape] => [N, M, shape]
+        # split parallel data [N * M, shape] -> [N, M, shape]
         values = np.array(np.split(_t2n(values), self.n_rollout_threads))
         actions = np.array(np.split(_t2n(actions), self.n_rollout_threads))
-        action_log_probs = np.array(
-            np.split(_t2n(action_log_probs), self.n_rollout_threads)
-        )
-        rnn_states_actor = np.array(
-            np.split(_t2n(rnn_states_actor), self.n_rollout_threads)
-        )
-        rnn_states_critic = np.array(
-            np.split(_t2n(rnn_states_critic), self.n_rollout_threads)
-        )
+        action_log_probs = np.array(np.split(_t2n(action_log_probs), self.n_rollout_threads))
+        rnn_states_actor = np.array(np.split(_t2n(rnn_states_actor), self.n_rollout_threads))
+        rnn_states_critic = np.array(np.split(_t2n(rnn_states_critic), self.n_rollout_threads))
         return values, actions, action_log_probs, rnn_states_actor, rnn_states_critic
 
     def insert(self, data: List[np.ndarray]):
@@ -231,27 +207,13 @@ class JSBSimRunner(Runner):
 
     @torch.no_grad()
     def eval(self, total_num_steps):
-        logging.info(
-            set_color(">>>>>>>>>>>>>>>>>>>>>Evaluate<<<<<<<<<<<<<<<<<<<<<", "red")
-        )
+        logging.info(set_color(">>>>>>>>>>>>>>>>>>>>>>Evaluate<<<<<<<<<<<<<<<<<<<<<<", "red"))
         total_episodes, eval_episode_rewards = 0, []
-        eval_cumulative_rewards = np.zeros(
-            (self.n_eval_rollout_threads, *self.buffer.rewards.shape[2:]),
-            dtype=np.float32,
-        )
-
+        eval_cumulative_rewards = np.zeros((self.n_eval_rollout_threads, * self.buffer.rewards.shape[2:]), dtype=np.float32)
         eval_obs = self.eval_envs.reset()
-        eval_masks = np.ones(
-            (self.n_eval_rollout_threads, *self.buffer.masks.shape[2:]),
-            dtype=np.float32,
-        )
-        eval_rnn_states = np.zeros(
-            (self.n_eval_rollout_threads, *self.buffer.rnn_states_actor.shape[2:]),
-            dtype=np.float32,
-        )
-
+        eval_masks = np.ones((self.n_eval_rollout_threads, * self.buffer.masks.shape[2:]), dtype=np.float32)
+        eval_rnn_states = np.zeros((self.n_eval_rollout_threads, *self.buffer.rnn_states_actor.shape[2:]), dtype=np.float32)
         while total_episodes < self.eval_episodes:
-
             self.policy.prep_rollout()
             eval_actions, eval_rnn_states = self.policy.act(
                 np.concatenate(eval_obs),
@@ -259,97 +221,28 @@ class JSBSimRunner(Runner):
                 np.concatenate(eval_masks),
                 deterministic=True,
             )
-            eval_actions = np.array(
-                np.split(_t2n(eval_actions), self.n_eval_rollout_threads)
-            )
-            eval_rnn_states = np.array(
-                np.split(_t2n(eval_rnn_states), self.n_eval_rollout_threads)
-            )
-
-            # Observe reward and next obs
-            eval_obs, eval_rewards, eval_dones, eval_infos = self.eval_envs.step(
-                eval_actions
-            )
-
+            eval_actions = np.array(np.split(_t2n(eval_actions), self.n_eval_rollout_threads))
+            eval_rnn_states = np.array(np.split(_t2n(eval_rnn_states), self.n_eval_rollout_threads))
+            # observe reward and next obs
+            eval_obs, eval_rewards, eval_dones, eval_infos = self.eval_envs.step(eval_actions)
             eval_cumulative_rewards += eval_rewards
             eval_dones_env = np.all(eval_dones.squeeze(axis=-1), axis=-1)
             total_episodes += np.sum(eval_dones_env)
             eval_episode_rewards.append(eval_cumulative_rewards[eval_dones_env == True])
             eval_cumulative_rewards[eval_dones_env == True] = 0
-
-            eval_masks = np.ones_like(eval_masks, dtype=np.float32)
-            eval_masks[eval_dones_env == True] = np.zeros(
-                ((eval_dones_env == True).sum(), *eval_masks.shape[1:]),
-                dtype=np.float32,
-            )
-            eval_rnn_states[eval_dones_env == True] = np.zeros(
-                ((eval_dones_env == True).sum(), *eval_rnn_states.shape[1:]),
-                dtype=np.float32,
-            )
-
+            eval_masks = np.zeros_like(eval_masks, dtype=np.float32)
+            eval_masks[eval_dones_env == True] = np.zeros(((eval_dones_env == True).sum(), *eval_masks.shape[1:]), dtype=np.float32)
+            eval_rnn_states[eval_dones_env == True] = np.zeros(((eval_dones_env == True).sum(), *eval_rnn_states.shape[1:]), dtype=np.float32)
         eval_infos = {}
-        eval_infos["eval_average_episode_rewards"] = np.concatenate(
-            eval_episode_rewards
-        ).mean(
-            axis=1
-        )  # shape: [num_agents, 1]
-        logging.info(
-            set_color("Reward : ", "green")
-            + "{}".format(np.mean(eval_infos["eval_average_episode_rewards"]))
-        )
+        eval_infos["eval_average_episode_rewards"] = np.concatenate(eval_episode_rewards).mean(axis=1)
+        logging.info(set_color("Reward", "green") + "{}".format(np.mean(eval_infos["eval_average_episode_rewards"])))
         self.log_info(eval_infos, total_num_steps)
-        logging.info(
-            set_color(
-                ">>>>>>>>>>>>>>>>>>>>>Evaluate<<<<<<<<<<<<<<<<<<<<<",
-                "pink",
-            )
-        )
-
-    @torch.no_grad()
-    def render(self):
-        logging.info(">>>>>>>>>>>>>>>>>>>>>>Render<<<<<<<<<<<<<<<<<<<<<<", "red")
-        render_episode_rewards = 0
-        render_obs = self.envs.reset()
-        render_masks = np.ones((1, *self.buffer.masks.shape[2:]), dtype=np.float32)
-        render_rnn_states = np.zeros(
-            (1, *self.buffer.rnn_states_actor.shape[2:]), dtype=np.float32
-        )
-        self.envs.render(
-            mode="txt", filepath=f"{self.run_dir}/{self.experiment_name}.txt.acmi"
-        )
-        while True:
-            self.policy.prep_rollout()
-            render_actions, render_rnn_states = self.policy.act(
-                np.concatenate(render_obs),
-                np.concatenate(render_rnn_states),
-                np.concatenate(render_masks),
-                deterministic=True,
-            )
-            render_actions = np.expand_dims(_t2n(render_actions), axis=0)
-            render_rnn_states = np.expand_dims(_t2n(render_rnn_states), axis=0)
-
-            # Observe reward and next obs
-            render_obs, render_rewards, render_dones, render_infos = self.envs.step(
-                render_actions
-            )
-            if self.use_selfplay:
-                render_rewards = render_rewards[:, : self.num_agents // 2, ...]
-            render_episode_rewards += render_rewards
-            self.envs.render(
-                mode="txt", filepath=f"{self.run_dir}/{self.experiment_name}.txt.acmi"
-            )
-            if render_dones.all():
-                break
-        render_infos = {}
-        render_infos["render_episode_reward"] = render_episode_rewards
-        logging.info(
-            set_color("Reward : ", "green")
-            + set_color("{}".format(render_infos["render_episode_reward"]), "blue")
-        )
-        logging.info(">>>>>>>>>>>>>>>>>>>>>>>Render<<<<<<<<<<<<<<<<<<<<<<<", "pink")
+        logging.info(set_color(">>>>>>>>>>>>>>>>>>>>>Evaluate<<<<<<<<<<<<<<<<<<<<<", "pink"))
 
     def save(self, episode):
         policy_actor_state_dict = self.policy.actor.state_dict()
         torch.save(policy_actor_state_dict, str(self.save_dir) + "/actor_latest.pt")
         policy_critic_state_dict = self.policy.critic.state_dict()
         torch.save(policy_critic_state_dict, str(self.save_dir) + "/critic_latest.pt")
+
+    # TODO(zzp): render
