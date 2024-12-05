@@ -1,7 +1,7 @@
 """
 Author       : zzp@buaa.edu.cn
 Date         : 2024-11-11 16:07:45
-LastEditTime : 2024-11-11 18:08:40
+LastEditTime : 2024-11-27 15:20:27
 FilePath     : /LAG/envs/JSBSim/tasks/single_combat_task.py
 Description  : 
 """
@@ -220,7 +220,6 @@ class SingleCombatTask(BaseTask):
                         )
                         AO, _, R = get_AO_TA_R(ego_feature, enm_feature)
                         enm.bloods -= _orientation_fn(AO) * _distance_fn(R / 1000)
-                        # TODO(zzp): print bloods
                         # if agent_id == 'A0100' and enm.uid == 'B0100':
                         #     print(f"AO: {AO * 180 / np.pi}, {_orientation_fn(AO)}, dis:{R/1000}, {_distance_fn(R/1000)}")
 

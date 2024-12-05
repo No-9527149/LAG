@@ -1,7 +1,7 @@
 """
 Author       : zzp@buaa.edu.cn
 Date         : 2024-11-11 16:07:45
-LastEditTime : 2024-11-11 18:11:18
+LastEditTime : 2024-12-03 16:32:06
 FilePath     : /LAG/envs/env_wrappers.py
 Description  : 
 """
@@ -222,6 +222,7 @@ def worker(remote: Connection, parent_remote: Connection, env_fn_wrappers):
         return obs, reward, done, info
 
     parent_remote.close()
+    # ! env initialized !
     envs = [env_fn_wrapper() for env_fn_wrapper in env_fn_wrappers.x]
     try:
         while True:

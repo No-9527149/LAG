@@ -1,7 +1,7 @@
 """
 Author       : zzp@buaa.edu.cn
 Date         : 2024-11-11 16:07:45
-LastEditTime : 2024-11-11 18:01:40
+LastEditTime : 2024-11-27 20:15:16
 FilePath     : /LAG/envs/JSBSim/envs/single_control_env.py
 Description  : 
 """
@@ -13,16 +13,16 @@ class SingleControlEnv(BaseEnv):
     """
     SingleControlEnv is an fly-control env for single agent with no enemy fighters.
     """
-    def __init__(self, config_name: str):
-        super().__init__(config_name)
+    def __init__(self, env_config_name: str):
+        super().__init__(env_config_name)
         # Env-Specific initialization here!
         assert len(self.agents.keys()) == 1, f"{self.__class__.__name__} only supports 1 aircraft!"
         self.init_states = None
 
     def load_task(self):
-        task_name = getattr(self.config, 'task', None)
+        task_name = getattr(self.env_config, 'task', None)
         if task_name == 'heading':
-            self.task = HeadingTask(self.config)
+            self.task = HeadingTask(self.env_config)
         else:
             raise NotImplementedError(f'Unknown task_name: {task_name}')
 

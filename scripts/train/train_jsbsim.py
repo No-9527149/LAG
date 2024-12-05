@@ -1,7 +1,7 @@
 """
 Author       : zzp@buaa.edu.cn
 Date         : 2024-11-11 20:47:48
-LastEditTime : 2024-11-15 18:22:01
+LastEditTime : 2024-12-03 16:03:39
 FilePath     : /LAG/scripts/train/train_jsbsim.py
 Description  : 
 """
@@ -25,7 +25,12 @@ sys.path.append(
 from config import get_config, parser_to_dict, parser_dict_to_color_string
 from logger import init_logger, set_color
 from runner.share_jsbsim_runner import ShareJSBSimRunner
-from envs.JSBSim.envs import SingleCombatEnv, SingleControlEnv, MultipleCombatEnv
+from envs.JSBSim.envs import (
+    SingleCombatEnv,
+    SingleControlEnv,
+    MultipleCombatEnv,
+    CollaborationEnv,
+)
 from envs.env_wrappers import (
     SubprocVecEnv,
     DummyVecEnv,
@@ -59,6 +64,8 @@ def make_train_env(all_args):
                 env = SingleControlEnv(all_args.scenario_name)
             elif all_args.env_name == "MultipleCombat":
                 env = MultipleCombatEnv(all_args.scenario_name)
+            elif all_args.env_name == "Collaboration":
+                env = CollaborationEnv(all_args.scenario_name)
             else:
                 logging.error(
                     "Can not support the " + all_args.env_name + "environment."
@@ -114,6 +121,8 @@ def make_eval_env(all_args):
                 env = SingleControlEnv(all_args.scenario_name)
             elif all_args.env_name == "MultipleCombat":
                 env = MultipleCombatEnv(all_args.scenario_name)
+            elif all_args.env_name == "Collaboration":
+                env = CollaborationEnv(all_args.scenario_name)
             else:
                 logging.error(
                     "Can not support the " + all_args.env_name + "environment."

@@ -1,7 +1,7 @@
 """
 Author       : zzp@buaa.edu.cn
 Date         : 2024-11-11 20:47:48
-LastEditTime : 2024-11-12 17:20:41
+LastEditTime : 2024-11-27 16:22:12
 FilePath     : /LAG/runner/base_runner.py
 Description  : 
 """
@@ -58,6 +58,11 @@ class Runner(object):
         self.load()
 
     def load(self):
+        """trainer, algorithm, buffer
+
+        Raises:
+            NotImplementedError: _description_
+        """
         # algorithm
         if self.algorithm_name == "ppo":
             from ..algorithms.ppo.ppo_trainer import PPOTrainer as Trainer

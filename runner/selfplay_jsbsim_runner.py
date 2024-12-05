@@ -1,7 +1,7 @@
 """
 Author       : zzp
 Date         : 2024-11-11 20:47:48
-LastEditTime : 2024-11-18 16:00:52
+LastEditTime : 2024-11-27 16:05:31
 FilePath     : /LAG/runner/selfplay_jsbsim_runner.py
 Description  : No more description
 """
@@ -28,7 +28,7 @@ class SelfplayJSBSimRunner(JSBSimRunner):
         self.act_space = self.envs.action_space
         self.num_agents = self.envs.num_agents
         self.num_opponents = self.all_args.n_choose_opponents
-        # ? NOTE(zzp): eval_episodes and num_opponents?
+        # NOTE(zzp): eval_episodes and num_opponents
         assert (
             self.eval_episodes >= self.num_opponents
         ), f"Number of evaluation episodes:{self.eval_episodes} should be greater than number of opponents:{self.num_opponents}"
@@ -56,7 +56,7 @@ class SelfplayJSBSimRunner(JSBSimRunner):
 
         self.selfplay_algo = get_algorithm(self.all_args.selfplay_algorithm)
 
-        # ? NOTE(zzp): n_rollout_threads and num_opponents
+        # NOTE(zzp): n_rollout_threads and num_opponents
         assert (
             self.num_opponents <= self.n_rollout_threads
         ), "Number of different opponents({}) must less than or equal to number of training threads({})!".format(

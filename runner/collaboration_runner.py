@@ -1,7 +1,7 @@
 """
 Author       : zzp@buaa.edu.cn
 Date         : 2024-11-18 16:40:15
-LastEditTime : 2024-11-19 14:07:29
+LastEditTime : 2024-11-27 15:17:09
 FilePath     : /LAG/runner/collaboration_runner.py
 Description  : 
 """
@@ -104,7 +104,6 @@ class CollaborationRunner(JSBSimRunner):
             # log info
             if episode % self.log_interval == 0:
                 end = time.time()
-                # ? FPS ?
                 # NOTE(zzp): FPS means number of steps per sec
                 logging.info(
                     set_color("Episode: ", "green")

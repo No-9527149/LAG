@@ -1,6 +1,13 @@
 """
 Author       : zzp@buaa.edu.cn
 Date         : 2024-11-11 16:07:45
+LastEditTime : 2024-12-04 21:20:35
+FilePath     : /LAG/envs/JSBSim/utils/utils.py
+Description  : 
+"""
+"""
+Author       : zzp@buaa.edu.cn
+Date         : 2024-11-11 16:07:45
 LastEditTime : 2024-11-26 21:17:36
 FilePath     : /LAG/envs/JSBSim/utils/utils.py
 Description  : 

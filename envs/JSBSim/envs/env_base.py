@@ -22,14 +22,14 @@ class BaseEnv(gymnasium.Env):
 
     def __init__(self, config_name: str):
         # basic args
-        self.config = parse_config(config_name)
-        self.max_steps = getattr(self.config, "max_steps", 100)  # type: int
-        self.sim_freq = getattr(self.config, "sim_freq", 60)  # type: int
+        self.env_config = parse_config(config_name)
+        self.max_steps = getattr(self.env_config, "max_steps", 100)  # type: int
+        self.sim_freq = getattr(self.env_config, "sim_freq", 60)  # type: int
         self.agent_interaction_steps = getattr(
-            self.config, "agent_interaction_steps", 12
+            self.env_config, "agent_interaction_steps", 12
         )  # type: int
         self.center_lon, self.center_lat, self.center_alt = getattr(
-            self.config, "battle_field_center", (120.0, 60.0, 0.0)
+            self.env_config, "battle_field_center", (120.0, 60.0, 0.0)
         )
         self._create_records = False
         self.load()
@@ -60,17 +60,17 @@ class BaseEnv(gymnasium.Env):
         self.seed()
 
     def load_task(self):
-        self.task = BaseTask(self.config)
+        self.task = BaseTask(self.env_config)
 
     def load_simulator(self):
         self._jsbsims = {}  # type: Dict[str, AircraftSimulator]
-        for uid, config in self.config.aircraft_configs.items():
+        for uid, config in self.env_config.aircraft_configs.items():
             self._jsbsims[uid] = AircraftSimulator(
                 uid=uid,
                 color=config.get("color", "Red"),
                 model=config.get("model", "f16"),
                 init_state=config.get("init_state"),
-                origin=getattr(self.config, "battle_field_center", (120.0, 60.0, 0.0)),
+                origin=getattr(self.env_config, "battle_field_center", (120.0, 60.0, 0.0)),
                 sim_freq=self.sim_freq,
                 num_missiles=config.get("missile", 0),
             )

@@ -1,7 +1,7 @@
 """
 Author       : zzp@buaa.edu.cn
 Date         : 2024-11-19 14:27:03
-LastEditTime : 2024-11-26 21:53:23
+LastEditTime : 2024-12-04 22:02:45
 FilePath     : /LAG/envs/JSBSim/tasks/collaboration_task.py
 Description  : 
 """
@@ -20,7 +20,7 @@ from ..reward_functions import (
     ShootPenaltyReward,
 )
 from ..core.simulator import MissileSimulator
-from ..utils.utils import LLA2NEU, get_AO_TA_R, get_root_dir
+from ..utils.utils import LLA2NEU, get_AO_TA_R, get_pincer_angle
 from ..model.baseline_actor import BaselineActor
 
 
@@ -30,7 +30,10 @@ class CollaborationTask(SingleCombatTask):
         self.max_attack_angle = getattr(self.config, "max_attack_angle", 180)
         self.max_attack_distance = getattr(self.config, "max_attack_distance", np.inf)
         self.min_attack_interval = getattr(self.config, "min_attack_interval", 125)
+        self.initial_distance = getattr(self.config, "initial_distance", 20000)
+        self.initial_alt = getattr(self.config, "initial_alt", 8000)
         # NOTE(zzp): Finish Reward
+        # NOTE(zzp): CollaborationReward scale
         self.reward_functions = [
             AltitudeReward(self.config),
             CollaborationReward(self.config),
@@ -41,7 +44,6 @@ class CollaborationTask(SingleCombatTask):
 
     def reset(self, env):
         """Reset fighter blood & missile status"""
-        # TODO(zzp): shoot action for enm?
         self._shoot_action = {agent_id: 0 for agent_id in env.agents.keys()}
         self._last_shoot_time = {
             agent_id: -self.min_attack_interval for agent_id in env.agents.keys()
@@ -60,7 +62,6 @@ class CollaborationTask(SingleCombatTask):
 
     def load_action_space(self):
         # aileron, elevator, rudder, throttle, shoot control
-        # TODO(zzp): continuous or discrete action space?
         self.action_space = spaces.Tuple(
             [spaces.MultiDiscrete([41, 41, 41, 30]), spaces.Discrete(2)]
         )
@@ -69,9 +70,12 @@ class CollaborationTask(SingleCombatTask):
         return super().normalize_action(env, agent_id, action[:-1].astype(np.int32))
 
     def get_obs(self, env, agent_id):
-        """
-        Convert simulation states into the format of observation_space
-        TODO(zzp): use absolute/relative enm info and missile info
+        """Convert simulation states into the format of observation_space
+
+        NOTE(zzp): use absolute enm info and missile info
+
+        NOTE(zzp): need any collaboration information pincer angle
+
         ------
         Returns: (np.ndarray)
         - ego info
@@ -98,6 +102,8 @@ class CollaborationTask(SingleCombatTask):
             - [18] ego_TA
             - [19] relative distance
             - [20] side flag
+        - Collaboration info
+            - [21] pincer_angle          (unit: rad) [0, pi]
         """
         norm_obs = np.zeros(21)
         ego_obs_list = np.array(
@@ -136,25 +142,28 @@ class CollaborationTask(SingleCombatTask):
         norm_obs[13] = R / 10000
         norm_obs[14] = side_flag
         # (3) relative missile info
-        missile_sim = env.agents[agent_id].check_missile_warning()
+        missile_sim = env.agents[agent_id].enemies[0].check_missile_warning()
         if missile_sim is not None:
             missile_feature = np.concatenate(
                 (missile_sim.get_position(), missile_sim.get_velocity())
             )
-            ego_AO, ego_TA, R, side_flag = get_AO_TA_R(
-                ego_feature, missile_feature, return_side=True
+            missile_AO, missile_TA, R, side_flag = get_AO_TA_R(
+                missile_feature, enm_feature, return_side=True
             )
+            pincer_angle = get_pincer_angle(ego_feature, enm_feature, missile_feature)
             norm_obs[15] = (
-                np.linalg.norm(missile_sim.get_velocity()) - ego_obs_list[9]
+                np.linalg.norm(missile_sim.get_velocity()) - enm_obs_list[9]
             ) / 340
-            norm_obs[16] = (missile_feature[2] - ego_obs_list[2]) / 1000
-            norm_obs[17] = ego_AO
-            norm_obs[18] = ego_TA
+            norm_obs[16] = (missile_feature[2] - enm_obs_list[2]) / 1000
+            norm_obs[17] = missile_AO
+            norm_obs[18] = missile_TA
             norm_obs[19] = R / 10000
             norm_obs[20] = side_flag
+            norm_obs[21] = pincer_angle
 
     def step(self, env):
         super().step(self, env)
+        # TODO(zzp): step, action for each ego and enm agents
         for agent_id, agent in env.agents.items():
             # [RL-based missile launch with limited condition]
             shoot_flag = (
@@ -175,11 +184,11 @@ class CollaborationTask(SingleCombatTask):
 class HierarchicalCollaborationTask(HierarchicalSingleCombatTask, CollaborationTask):
     def __init__(self, config: str):
         HierarchicalSingleCombatTask.__init__(config)
-        # TODO(zzp): model device in HierarchicalSingleCombatTask
-        # TODO(zzp): How about angles?
         self.reward_functions = [
             AltitudeReward(self.config),
+            CollaborationReward(self.config),
             EventDrivenReward(self.config),
+            RelativeAltitudeReward(self.config),
             ShootPenaltyReward(self.config),
         ]
 

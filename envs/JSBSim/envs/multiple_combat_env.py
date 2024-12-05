@@ -13,8 +13,8 @@ class MultipleCombatEnv(BaseEnv):
     MultipleCombatEnv is an multi-player competitive environment.
     """
 
-    def __init__(self, config_name: str):
-        super().__init__(config_name)
+    def __init__(self, env_config_name: str):
+        super().__init__(env_config_name)
         # Env-Specific initialization here!
         self._create_records = False
 
@@ -23,13 +23,13 @@ class MultipleCombatEnv(BaseEnv):
         return self.task.share_observation_space
 
     def load_task(self):
-        task_name = getattr(self.config, "task", None)
+        task_name = getattr(self.env_config, "task", None)
         if task_name == "multiple_combat":
-            self.task = MultipleCombatTask(self.config)
+            self.task = MultipleCombatTask(self.env_config)
         elif task_name == "hierarchical_multiple_combat":
-            self.task = HierarchicalMultipleCombatTask(self.config)
+            self.task = HierarchicalMultipleCombatTask(self.env_config)
         elif task_name == "hierarchical_multiple_combat_shoot":
-            self.task = HierarchicalMultipleCombatShootTask(self.config)
+            self.task = HierarchicalMultipleCombatShootTask(self.env_config)
         else:
             raise NotImplementedError(f"Unknown task_name: {task_name}")
 

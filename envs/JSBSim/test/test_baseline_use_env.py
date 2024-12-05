@@ -173,7 +173,7 @@ class ManeuverAgent(BaselineAgent):
 
 
 def test_maneuver():
-    env = SingleCombatEnv(config_name="1v1/NoWeapon/test/opposite")
+    env = SingleCombatEnv(env_config_name="1v1/NoWeapon/test/opposite")
     obs = env.reset()
     env.render(filepath="control.txt.acmi")
     agent0 = ManeuverAgent(agent_id=0, maneuver="triangle")
