@@ -89,7 +89,7 @@ class BoxFlattener:
         assert isinstance(ori_space, gym.spaces.Box) or isinstance(
             ori_space, gym.spaces.MultiDiscrete
         )
-        self.size = np.product(ori_space.shape)
+        self.size = np.prod(ori_space.shape)
 
     def __call__(self, observation):
         array = np.array(observation, copy=False)
